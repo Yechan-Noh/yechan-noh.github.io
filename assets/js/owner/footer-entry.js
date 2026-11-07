@@ -10,7 +10,11 @@
   footer.querySelector('[data-overview-open]').addEventListener('click', () => {
     const ready = armedAt !== null && performance.now() - armedAt <= 5000;
     armedAt = null;
-    if (ready) location.assign(destination);
+    if (ready) {
+      window.MTSGAnalytics?.excludeOwner();
+      try { sessionStorage.setItem('mtsg-overview-entry-v1','yes'); } catch {}
+      location.assign(destination+'#overview');
+    }
   });
   document.addEventListener('visibilitychange', () => {
     if (document.hidden) armedAt = null;

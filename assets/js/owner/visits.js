@@ -55,7 +55,14 @@
     if(status===403)return 'Google has not granted access to these visit records. Check the connected account and BigQuery permissions.';
     return 'Visit records could not be loaded. Please try again later.';
   }
-  async function loadVisits({range,filters,token,signal,fetcher=fetch}) {
+  async function loadVisits({range,filters,token,backendUrl,signal,fetcher=fetch}) {
+    if(backendUrl) {
+      const r=await fetcher(backendUrl+'/visits',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({range:{start:range.start,end:range.end},filters}),cache:'no-store',credentials:'omit',signal});
+      const body=await r.json();
+      if(!r.ok)throw new Error(body.error?.message||'Visit records could not be loaded.');
+      if(!Array.isArray(body.visits))throw new Error('The visit response is incomplete.');
+      return body;
+    }
     async function call(url,opts={}) {
       const r=await fetcher(url,{...opts,headers:{Authorization:'Bearer '+token,'Content-Type':'application/json'},cache:'no-store',credentials:'omit',signal});
       const body=await r.json();
@@ -116,7 +123,7 @@
       const key=JSON.stringify([range.start,range.end,filters]);
       attempted=true;button.disabled=true;status.textContent='Loading daily visit records…';
       try {
-        const saved=cache.get(key),result=!fresh&&saved&&Date.now()-saved.at<180000?saved.result:await loadVisits({range,filters,token:getSession().token,signal:AbortSignal.any([controller.signal,AbortSignal.timeout(65000)])});
+        const saved=cache.get(key),result=!fresh&&saved&&Date.now()-saved.at<180000?saved.result:await loadVisits({range,filters,token:getSession().token,backendUrl:getSession().backendUrl,signal:AbortSignal.any([controller.signal,AbortSignal.timeout(65000)])});
         if(disposed||!getSession())return;
         cache.set(key,{at:Date.now(),result});if(cache.size>12)cache.delete(cache.keys().next().value);
         data=result.visits;loaded=true;draw();const insight=journeySummary(data);find('[data-visit-insights]').innerHTML=`<div class="ov-journey"><div><strong>${insight.continued} / ${insight.research}</strong><span>Research visits continued to Publications</span></div><div><strong>${insight.returning}</strong><span>Returning-browser sessions</span></div><div><strong>${insight.scholar}</strong><span>Google Scholar sessions</span></div></div><p class="ov-help">Within the loaded exports${result.limited?' (latest 500 only)':''}. Missing earlier exports can limit these counts.</p>`;
