@@ -43,7 +43,7 @@
             this.hue = 185 + Math.random() * 25;
         }
         draw() {
-            ctx.fillStyle = `hsla(${this.hue},45%,70%,.95)`;
+            ctx.fillStyle = `hsla(${this.hue},32%,38%,.95)`;
             ctx.beginPath();
             ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
             ctx.fill();
@@ -126,7 +126,7 @@
                     for (const q of cells.get(`${x},${y}`) || []) {
                         const d = Math.hypot(p.x - q.x, p.y - q.y);
                         if (d >= 15) continue;
-                        ctx.strokeStyle = `hsla(${p.hue},45%,70%,${0.4 - 0.4 * d / 15})`;
+                        ctx.strokeStyle = `hsla(${p.hue},32%,38%,${0.4 - 0.4 * d / 15})`;
                         ctx.lineWidth = 0.85;
                         ctx.beginPath(); ctx.moveTo(p.x, p.y); ctx.lineTo(q.x, q.y); ctx.stroke();
                     }
