@@ -142,3 +142,6 @@ body{background:#fff;color:var(--ink)}
 .footer-quiet{font:inherit;color:inherit;background:none;border:0;padding:0;cursor:default}.footer-quiet:focus-visible{outline:2px solid var(--site-accent);outline-offset:3px}
 .news-update{max-width:900px;margin:44px auto 70px;line-height:1.75}.news-update h1{font-size:clamp(28px,4vw,42px);line-height:1.2;margin:18px 0 30px}.news-update p{margin:16px 0}.news-update img{max-width:100%;height:auto}
 .legacy-content>#main{width:min(1000px,85%);margin:45px auto 80px}.page__title{font-size:36px;margin:20px 0}.page__content{line-height:1.75}.page__content p{margin:18px 0}.page__content img{height:auto;max-width:100%}
+
+/* Align the shared masthead with the capped homepage composition. */
+.masthead{width:min(1280px,91%);margin-inline:auto}

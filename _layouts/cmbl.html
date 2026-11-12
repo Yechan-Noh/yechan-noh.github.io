@@ -3,8 +3,8 @@
 {% include base_path %}{% include seo.html %}
 <link rel="icon" type="image/svg+xml" href="{{ '/images/favicon.svg' | relative_url }}"><meta name="theme-color" content="#ffffff">
 <link href="{{ '/feed.xml' | relative_url }}" type="application/atom+xml" rel="alternate" title="CMBL Feed">
-{% assign common_styles = 'design,legacy-layout,motion,theme' | split: ',' %}{% for style in common_styles %}<link rel="stylesheet" href="{{ '/assets/cmbl/css/' | append: style | append: '.css' | relative_url }}?v=20261112-4">{% endfor %}
-{% for style in page.cmbl_styles %}<link rel="stylesheet" href="{{ '/assets/cmbl/css/' | append: style | append: '.css' | relative_url }}?v=20261112-4">{% endfor %}
+{% assign common_styles = 'design,legacy-layout,motion,theme' | split: ',' %}{% for style in common_styles %}<link rel="stylesheet" href="{{ '/assets/cmbl/css/' | append: style | append: '.css' | relative_url }}?v=20261112-5">{% endfor %}
+{% for style in page.cmbl_styles %}<link rel="stylesheet" href="{{ '/assets/cmbl/css/' | append: style | append: '.css' | relative_url }}?v=20261112-5">{% endfor %}
 {% if page.url == '/contact/' %}<link href="https://fonts.googleapis.com/css2?family=Merriweather:wght@400;700&family=Source+Sans+Pro:wght@400;600&display=swap" rel="stylesheet">{% endif %}
 </head><body class="{{ page.body_class }}"><a class="skip" href="#main-content">Skip to content</a>
 <header class="masthead"><a class="brand" href="{{ '/' | relative_url }}">CMBL<span>Computational Molecular<br>Biomimetics Lab</span></a><nav aria-label="Main navigation">{% assign nav_path = "/people/" %}<a href="{{ nav_path | relative_url }}"{% if page.url contains nav_path %} aria-current="page"{% endif %}>People</a>{% assign nav_path = "/research/" %}<a href="{{ nav_path | relative_url }}"{% if page.url contains nav_path %} aria-current="page"{% endif %}>Research</a>{% assign nav_path = "/publications/" %}<a href="{{ nav_path | relative_url }}"{% if page.url contains nav_path %} aria-current="page"{% endif %}>Publications</a>{% assign nav_path = "/news/" %}<a href="{{ nav_path | relative_url }}"{% if page.url contains nav_path %} aria-current="page"{% endif %}>News</a>{% assign nav_path = "/gallery/" %}<a href="{{ nav_path | relative_url }}"{% if page.url contains nav_path %} aria-current="page"{% endif %}>Gallery</a>{% assign nav_path = "/contact/" %}<a href="{{ nav_path | relative_url }}"{% if page.url contains nav_path %} aria-current="page"{% endif %}>Contact</a></nav></header>
@@ -12,5 +12,5 @@
 <footer id="mtsg-footer" class="shell site-footer"><span><button type="button" class="footer-quiet" data-overview-arm aria-label="Copyright">©</button> <button type="button" class="footer-quiet" data-overview-open>CMBL</button> · Yechan Noh</span><a href="mailto:ynoh@nd.edu">ynoh@nd.edu</a></footer>
 <script defer src="{{ '/assets/js/owner/footer-entry.js' | relative_url }}" data-dashboard="{{ '/dashboard/' | relative_url }}"></script>
 {% include analytics.html %}
-{% for script in page.cmbl_scripts %}<script defer src="{{ '/assets/cmbl/js/' | append: script | append: '.js' | relative_url }}?v=20261112-4"></script>{% endfor %}
+{% for script in page.cmbl_scripts %}<script defer src="{{ '/assets/cmbl/js/' | append: script | append: '.js' | relative_url }}?v=20261112-5"></script>{% endfor %}
 </body></html>
