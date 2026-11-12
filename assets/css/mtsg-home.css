@@ -128,3 +128,10 @@
 .home-refresh .topic-image{height:220px;padding:0 0 14px;border-bottom:1px solid var(--line);margin-bottom:20px}
 .home-refresh .topic-preview h3{margin-bottom:10px}
 @media(max-width:760px){.home-refresh .topic-grid{grid-auto-columns:calc(100% - 28px);gap:16px}.home-refresh .topic-image{height:206px}.home-refresh .home-research .section-top{gap:12px}.home-refresh .topic-controls button{width:30px;height:30px}.home-refresh .home-research .plain-link{gap:8px}}
+
+/* Research-statement overview, shown intact on white. */
+.home-refresh .home-biomimetics{padding-top:28px;padding-bottom:16px;background:#fff}
+.home-refresh .home-biomimetics figure{max-width:650px;margin:0 auto}
+.home-refresh .home-biomimetics a{display:block;background:#fff;cursor:zoom-in}
+.home-refresh .home-biomimetics img{width:100%;height:auto;object-fit:contain;background:#fff}
+@media(max-width:760px){.home-refresh .home-biomimetics{padding-top:20px;padding-bottom:8px}}
