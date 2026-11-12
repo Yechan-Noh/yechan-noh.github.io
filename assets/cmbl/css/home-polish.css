@@ -49,3 +49,13 @@
  -webkit-mask-image:linear-gradient(to bottom,#000 76%,rgba(0,0,0,.94) 81%,rgba(0,0,0,.72) 87%,rgba(0,0,0,.35) 93%,rgba(0,0,0,.08) 98%,transparent 100%);
  mask-image:linear-gradient(to bottom,#000 76%,rgba(0,0,0,.94) 81%,rgba(0,0,0,.72) 87%,rgba(0,0,0,.35) 93%,rgba(0,0,0,.08) 98%,transparent 100%);
 }
+/* Keep the opening composed at large desktop widths. */
+.home-page .opening{width:100%;max-width:1280px;height:clamp(700px,59.375vw,760px);margin-inline:auto}
+.home-page .hero-title h1{font-size:clamp(78px,8.3vw,106px)}
+.home-page .scene img{mask-image:linear-gradient(to bottom,#000 76%,rgba(0,0,0,.72) 87%,rgba(0,0,0,.35) 93%,transparent 100%)}
+@media(min-width:1280px){
+ .home-page .scene{top:55px;left:0;right:0;bottom:12px}
+ .home-page .scene img{height:auto;max-height:none;object-fit:contain}
+ .home-page .opening:after{content:"";position:absolute;inset:0;pointer-events:none;background:linear-gradient(to right,#fff,transparent 4%,transparent 96%,#fff);z-index:2}
+}
+@media(max-width:650px){.home-page .opening{height:700px}.home-page .hero-title h1{font-size:clamp(48px,10.8vw,70px)}}
