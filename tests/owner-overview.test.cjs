@@ -89,3 +89,24 @@ test('migration includes old and new site URLs while excluding owner and unrelat
  for(const p of ['/','/index.html','/research/','/people/','/news/2026-10-25-muacc-poster-award/','/publication/paper.html','/MPSG','/MPSG/','/MPSG/publications/'])assert.ok(matches(q.dimensionFilter,p),p);
  for(const p of ['/dashboard/','/owner/','/MPSG/dashboard/','/MPSG/owner/','/unrelated-project/'])assert.ok(!matches(q.dimensionFilter,p),p);
 });
+test('overview can render before the optional hourly request finishes',async()=>{
+ const period=api.periodFor('week','2026-11-12');
+ let calls=0, shown=false;
+ await assert.rejects(api.fetchReports(api.requests(period),{
+  session:{backendUrl:'https://example.test'},
+  fetcher:async(url,options)=>{
+   calls++;
+   if(calls===14)throw new Error('Hourly request stalled');
+   const q=JSON.parse(options.body).requests[0];
+   return {ok:true,json:async()=>({reports:[report((q.dimensions||[]).map(d=>d.name),q.metrics.map(m=>m.name),[])]})};
+  },
+  onProgress:(done,total,partial)=>{
+   if(done!==13)return;
+   const html=api.render(partial,partial,period,{tab:'overview',weekOffset:0},null,'America/Denver');
+   assert.match(html,/Hourly report is unavailable/);
+   assert.match(html,/Where visits begin/);
+   shown=true;
+  }
+ }),/Hourly request stalled/);
+ assert.equal(shown,true);
+});

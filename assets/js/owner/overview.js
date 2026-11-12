@@ -221,8 +221,8 @@
     <div class="ov-explore"><section class="ov-card"><p class="ov-eyebrow">Content</p><h2>Pages receiving attention</h2><div data-ov-pages>${pageTable(pages)}</div></section><section class="ov-card"><p class="ov-eyebrow">Discovery</p><h2>How visitors find you</h2>${bars(sources.slice(0,6),'sessionSourceMedium','sessions',c.sessions)}</section></div></div>
     <div data-panel="visits" hidden><section class="ov-card ov-visits" data-ov-visits></section></div>
     <div data-panel="content" hidden><div class="ov-explore"><section class="ov-card"><p class="ov-eyebrow">Content performance</p><h2>Pages and active time</h2><label class="ov-inline-search">Find page<input data-ov-search placeholder="Research, publications…"></label><div data-content-pages>${pageTable(pages)}</div><p class="ov-help">Old and new addresses are combined. Active time is foreground engagement, not measured reading time.</p></section><section class="ov-card"><p class="ov-eyebrow">Next steps</p><h2>Paper links selected</h2>${table(['Destination','Clicks'],paperLinks.map(r=>[esc(r.linkUrl),number(r.eventCount)]),'No paper-link clicks were reported for these dates. Unrecorded clicks cannot be recovered.')}</section></div>
-    <section class="ov-card ov-actions"><p class="ov-eyebrow">Research selections</p><h2>Topics, CV and contact</h2><p class="ov-help">Dedicated measurement begins November 6, 2026. Earlier dates were not measured with these events.</p>${table(['Recorded action','Count'],events.filter(r=>/^research_(topic|paper|cv|email)$/.test(r.eventName)).map(r=>[esc(r.eventName.replace('research_','')),number(r.eventCount)]),'No dedicated selections recorded yet. This is not evidence that earlier visitors took no action.')}</section>
-    <section class="ov-card"><p class="ov-eyebrow">Timing</p><h2>Activity by hour</h2>${heatmap(hours,range)}</section></div>
+    <section class="ov-card ov-actions"><p class="ov-eyebrow">Research selections</p><h2>Topics, CV and contact</h2><p class="ov-help">Dedicated measurement begins November 6, 2026. Earlier dates were not measured with these events.</p>${!parsed.events?'<p class="ov-empty">Action report is unavailable. Other reports are unaffected.</p>':table(['Recorded action','Count'],events.filter(r=>/^research_(topic|paper|cv|email)$/.test(r.eventName)).map(r=>[esc(r.eventName.replace('research_','')),number(r.eventCount)]),'No dedicated selections recorded yet. This is not evidence that earlier visitors took no action.')}</section>
+    <section class="ov-card"><p class="ov-eyebrow">Timing</p><h2>Activity by hour</h2>${parsed.hours?heatmap(hours,range):'<p class="ov-empty">Hourly report is unavailable. Other reports are unaffected.</p>'}</section></div>
     <section class="ov-export"><div><h2>Export this selection</h2><p>Only loaded report rows. Individual visits remain private in this browser.</p></div><div><select data-ov-export-type aria-label="Export report"><option value="daily">Daily summary</option><option value="locations">Locations</option><option value="cityPages">City and pages</option><option value="pages">Pages</option><option value="sources">Traffic sources</option></select><button type="button" data-ov-export>Download CSV</button></div></section>`;
   }
   function csv(data) {
@@ -266,7 +266,7 @@
         try { rows(report); } catch { throw new Error(`Google returned an incomplete ${batch[j][0]} report. Please refresh to retry.`); }
         result[batch[j][0]]=report;
       });
-      onProgress(Math.min(i+batchSize,entries.length),entries.length);
+      onProgress(Math.min(i+batchSize,entries.length),entries.length,result);
     }
     return result;
   }
@@ -326,7 +326,12 @@
         let reports;
         if(saved&&Date.now()-saved.time<180000)reports=saved.reports;
         else {
-          reports=await fetchReports(requests(range,{country:state.country,device:state.device,city:state.city}),{propertyId,session,signal,onProgress:(done,total)=>{if(version===revision)status.textContent=`Loading reports ${done} of ${total}…`;}});
+          reports=await fetchReports(requests(range,{country:state.country,device:state.device,city:state.city}),{propertyId,session,signal,onProgress:(done,total,partial)=>{
+            if(removed||version!==revision)return;
+            status.textContent=`Loading reports ${done} of ${total}…`;
+            // Show the complete overview before optional timing/action reports.
+            if(done===13){parent=partial;detail=partial;updateCountries();draw();}
+          }});
           if(removed||version!==revision||!getSession())return;
           cache.set(key,{time:Date.now(),reports});
           if(cache.size>16)cache.delete(cache.keys().next().value);
@@ -338,6 +343,7 @@
         status.textContent=`Updated ${loadedAt.toLocaleTimeString([], {hour:'2-digit',minute:'2-digit'})} · Recent data can change as Google processes events.`;
       } catch(error) {
         if(removed||version!==revision||error.name==='AbortError')return;
+        if(detail){status.textContent='Overview loaded. Some additional reports did not respond; refresh to retry.';return;}
         parent=detail=null;
         status.textContent=error.name==='TimeoutError'?'Google took too long to respond. Please refresh to retry.':error.message;
         connect.hidden=!error.connect;
