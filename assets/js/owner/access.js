@@ -37,7 +37,7 @@
     showOwnerLink();
     document.querySelectorAll('[data-private-view], [data-private-style]').forEach(e => e.remove());
     if (panel) panel.hidden = false;
-    if (mode) document.title = 'Owner sign-in · MTSG';
+    if (mode) document.title = 'Owner sign-in · CMBL';
     message(text);
   }
   function signOut(broadcast = true) {
@@ -78,7 +78,7 @@
     const view = document.createElement('div'); view.dataset.privateView = '';
     document.body.append(view);
     if (panel) panel.hidden = true;
-    document.title = 'Site Overview · MTSG';
+    document.title = 'Site Overview · CMBL';
     overview = window.MTSGOverview.mount({root: view, propertyId: config.propertyId, clientId: config.clientId,
       getSession: readSession, onRenew: () => signIn?.click(), onSignOut: signOut});
   }

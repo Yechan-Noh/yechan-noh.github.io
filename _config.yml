@@ -2,9 +2,9 @@
 #  SITE BASICS
 # ────────────────────────────────────────────────
 locale            : "en-US"
-title             : "MTSG"
+title             : "CMBL"
 title_separator   : "-"
-description       : "Molecular Transport Simulation Group — molecular simulation, transport physics, and molecular biomimetic engineering."
+description       : "Computational Molecular Biomimetics Lab — molecular simulation, transport physics, and molecular biomimetic engineering."
 url               : "https://yechan-noh.github.io"   # production URL
 baseurl           : ""                               # GitHub Pages user site
 repository        : "Yechan-Noh/yechan-noh.github.io"
@@ -93,7 +93,7 @@ social:
     - "https://www.linkedin.com/in/yechan-noh-phd-421906155/"
 
 og_image         : "/assets/img/people/yechan-noh-2026.jpg"  # ⚑ optional OG image
-og_description   : "MTSG · Molecular transport, interfacial dynamics, and biomimetic function."
+og_description   : "CMBL · Molecular transport, interfacial dynamics, and biomimetic function."
 
 # ────────────────────────────────────────────────
 #  ANALYTICS  (Google Analytics 4 — replace ID)

@@ -1,6 +1,6 @@
 /*  lj-hero.js  ──────────────────────────────────────────────────────────
-    Animated “MTSG” particle logo + fire-ball style repeller
-    © 2025 Molecular Transport Simulation Group
+    Animated “CMBL” particle logo + fire-ball style repeller
+    © 2025 Computational Molecular Biomimetics Lab
 ------------------------------------------------------------------------ */
 
 (() => {
@@ -80,12 +80,12 @@
         }
     }
 
-    /* ─── Build “MTSG” particle mask ────────────────────────────────── */
+    /* ─── Build “CMBL” particle mask ────────────────────────────────── */
     const particles = [];
     function initParticles() {
         particles.length = 0;
 
-        const TEXT = 'MTSG';
+        const TEXT = 'CMBL';
         let fontSize = 1.25 * Math.min(140, canvas.clientWidth / 3.4);
         const temp = document.createElement('canvas');
         const tctx = temp.getContext('2d');
