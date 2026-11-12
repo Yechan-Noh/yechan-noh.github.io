@@ -13,17 +13,17 @@
 .home-refresh .overline{font:11px/1.5 var(--font);letter-spacing:.1em;text-transform:uppercase;color:var(--muted)}
 .home-refresh .plain-link{font-size:13px;line-height:1.5;text-decoration:none;border-bottom:1px solid #9aaeb5;padding-bottom:4px;white-space:nowrap;display:inline-flex;gap:18px;align-items:center}
 /* The heading carries the identity; the animation remains a secondary signature. */
-.home-refresh .lab-masthead{display:grid;grid-template-columns:minmax(0,1fr) 230px;gap:28px;align-items:center;padding:30px 0 22px;border-bottom:1px solid var(--line)}
-.home-refresh .lab-masthead h1{font:normal clamp(40px,4.7vw,58px)/1.08 var(--serif);letter-spacing:-2.2px}
+.home-refresh .lab-masthead{display:grid;grid-template-columns:minmax(0,1fr) 230px;gap:28px;align-items:center;padding:42px 0 32px;border-bottom:0}
+.home-refresh .lab-masthead h1{font:normal clamp(40px,4.3vw,52px)/1.08 var(--serif);letter-spacing:-1.8px}
 .home-refresh .lab-masthead h1 span{display:block}
 .home-refresh .hero-motion{min-width:0;align-self:center}
 .home-refresh #titleCanvas{display:block;width:100%;height:125px}
 /* One shared baseline connects the scientific program and its principal investigator. */
-.home-refresh .introduction-grid{display:grid;grid-template-columns:minmax(0,1.22fr) minmax(0,.78fr);gap:54px;align-items:center;padding:24px 0 28px}
-.home-refresh .hero-figure{width:100%;max-width:570px;margin:0 auto;background:#fff}
+.home-refresh .introduction-grid{display:grid;grid-template-columns:minmax(0,1.4fr) minmax(0,.8fr);gap:48px;align-items:center;padding:38px 0 48px}
+.home-refresh .hero-figure{width:100%;max-width:620px;margin:0 auto;background:#fff}
 .home-refresh .hero-figure a{display:block;background:#fff;cursor:zoom-in}
 .home-refresh .hero-figure img{width:100%;height:auto;background:#fff}
-.home-refresh .home-person{min-width:0;border-left:1px solid var(--line);padding:4px 0 4px 32px;display:grid;grid-template-columns:96px minmax(0,1fr);gap:22px;align-items:start}
+.home-refresh .home-person{min-width:0;border-left:0;padding:4px 0 4px 32px;display:grid;grid-template-columns:96px minmax(0,1fr);gap:22px;align-items:start}
 .home-refresh .home-person>img{width:96px;height:125px;object-fit:cover;object-position:center 35%}
 .home-refresh .home-person>div{display:contents}
 .home-refresh .home-person .overline{grid-column:2;grid-row:1;align-self:start;margin-top:2px;font-size:10px}
