@@ -244,10 +244,13 @@
     }
     return report;
   }
-  async function fetchReports(specs, {propertyId,session,signal,fetcher=fetch}) {
+  async function fetchReports(specs, {propertyId,session,signal,fetcher=fetch,onProgress=()=>{}}) {
     const entries=Object.entries(specs), result={};
-    for(let i=0;i<entries.length;i+=5) {
-      const batch=entries.slice(i,i+5);
+    // The read-only proxy reliably serves individual reports; batched upstream
+    // calls can stall even when every constituent report succeeds.
+    const batchSize=session.backendUrl?1:5;
+    for(let i=0;i<entries.length;i+=batchSize) {
+      const batch=entries.slice(i,i+batchSize);
       const response=await fetcher(session.backendUrl ? session.backendUrl+'/reports' : `https://analyticsdata.googleapis.com/v1beta/properties/${encodeURIComponent(propertyId)}:batchRunReports`, {method:'POST',headers:{...(session.backendUrl?{}:{Authorization:'Bearer '+session.token}),'Content-Type':'application/json'},body:JSON.stringify({requests:batch.map(([,query])=>query)}),cache:'no-store',credentials:'omit',signal});
       if(!response.ok) {
         const detail=await response.json().catch(()=>({}));
@@ -263,6 +266,7 @@
         try { rows(report); } catch { throw new Error(`Google returned an incomplete ${batch[j][0]} report. Please refresh to retry.`); }
         result[batch[j][0]]=report;
       });
+      onProgress(Math.min(i+batchSize,entries.length),entries.length);
     }
     return result;
   }
@@ -274,7 +278,7 @@
     const state={weekOffset:0,day:null,metric:'sessions',country:'',device:'',pageSort:'views',search:'',locationSearch:'',tab:'overview',mapView:'us',city:'',visitKind:''};
     let visits,controller,revision=0,removed=false,timezone,parent,detail,period,maps,loadedAt;
     const cache=new Map();
-    const mapPromise=fetch(BASE+'/assets/js/owner/city-map.json',{credentials:'omit'}).then(r=>r.ok?r.json():null).then(cities=>({cities})).catch(()=>null);
+    const mapPromise=fetch(BASE+'/assets/js/owner/city-map.json',{credentials:'omit',signal:AbortSignal.timeout(6000)}).then(r=>r.ok?r.json():null).then(cities=>({cities})).catch(()=>null);
     const clearData=()=> {parent=detail=null;cache.clear();content.replaceChildren();content.hidden=true;};
     function activate(tab) {
       state.tab=tab;root.querySelectorAll('[data-panel]').forEach(el=>el.hidden=el.dataset.panel!==tab);
@@ -322,7 +326,7 @@
         let reports;
         if(saved&&Date.now()-saved.time<180000)reports=saved.reports;
         else {
-          reports=await fetchReports(requests(range,{country:state.country,device:state.device,city:state.city}),{propertyId,session,signal});
+          reports=await fetchReports(requests(range,{country:state.country,device:state.device,city:state.city}),{propertyId,session,signal,onProgress:(done,total)=>{if(version===revision)status.textContent=`Loading reports ${done} of ${total}…`;}});
           if(removed||version!==revision||!getSession())return;
           cache.set(key,{time:Date.now(),reports});
           if(cache.size>16)cache.delete(cache.keys().next().value);
