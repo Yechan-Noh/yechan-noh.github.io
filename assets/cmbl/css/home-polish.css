@@ -1,0 +1,41 @@
+/* Homepage hierarchy refinement; internal page layouts are unchanged. */
+.home-page .opening{height:clamp(700px,62vw,960px)}
+.home-page .scene{bottom:12px}
+.home-page .hero-signature{opacity:.78;transition:opacity .2s ease}
+.home-page .hero-signature:hover,.home-page .hero-signature:focus-within{opacity:1}
+.home-page .home-research{padding:44px 0 62px}
+.home-page .home-research .section-top{margin-bottom:24px}
+.home-page .home-research .section-top h2{font-size:32px;letter-spacing:-.7px}
+.home-page .home-research .plain-link{font-size:13px}
+.home-page .home-refresh .home-research .topic-track{grid-auto-columns:300px;gap:20px}
+.home-page .home-refresh .home-research .topic-preview{padding:19px 20px 23px;border:1px solid #d7e0e4;border-top:2px solid #6e8794;border-radius:7px}
+.home-page .home-refresh .home-research .topic-image{height:224px;margin-bottom:18px;padding-bottom:18px}
+.home-page .home-refresh .home-research .topic-preview h3{font-size:20px;line-height:1.35;font-weight:500}
+.home-page .home-refresh .home-research .topic-preview>p{font-size:14px;line-height:1.65;color:#586972}
+.home-page .home-information{padding-top:44px;gap:48px;margin-bottom:72px}
+.home-page .home-information .person-grid{grid-template-columns:164px minmax(0,1fr);gap:26px}
+.home-page .home-information .person-grid>img{width:164px;height:208px;object-fit:cover;border-radius:4px}
+.home-page .home-information .person-grid h2{margin:8px 0 16px;font-size:30px}
+.home-page .home-information .person-grid .eyebrow{font-size:10px;color:#566974;letter-spacing:1px}
+.home-page .home-information .position{font-size:15px;line-height:1.6}
+.home-page .home-information .person-grid .bio-detail{font-size:14px;line-height:1.7;color:#52636d;margin-top:15px}
+.home-page .home-information .person-grid .text-link{font-size:12px}
+.home-page .home-information .news-section{padding-left:32px}
+.home-page .home-information .section-heading h2{font-size:29px}
+.home-page .home-information .section-heading .text-link{font-size:12px}
+.home-page .home-information .news-row{grid-template-columns:80px minmax(0,1fr) 12px;gap:16px;padding:20px 0}
+.home-page .home-information .news-row time{font-size:11px;line-height:1.5;color:#60717c}
+.home-page .home-information .news-row h3{font-size:16px;line-height:1.45}
+@media(max-width:1000px){.home-page .home-information{gap:30px}.home-page .home-information .person-grid{grid-template-columns:115px minmax(0,1fr);gap:20px}.home-page .home-information .person-grid>img{width:115px;height:146px}.home-page .home-information .news-section{padding-left:24px}.home-page .home-information .news-row{grid-template-columns:68px minmax(0,1fr) 10px;gap:10px}}
+@media(max-width:760px){.home-page .home-information .person-grid{grid-template-columns:125px minmax(0,1fr);gap:23px}.home-page .home-information .person-grid>img{width:125px;height:159px}.home-page .home-information .news-section{padding:30px 0 0}.home-page .home-information .news-row{grid-template-columns:80px minmax(0,1fr) 12px;gap:12px}}
+@media(max-width:650px){.home-page .opening{height:700px}.home-page .scene{bottom:0}.home-page .home-research{padding:32px 0 40px}.home-page .home-research .section-top{gap:14px}.home-page .home-research .section-top h2{font-size:29px}.home-page .home-research .plain-link{font-size:12px}.home-page .home-refresh .home-research .topic-track{grid-auto-columns:min(300px,calc(100% - 28px));gap:16px}.home-page .home-refresh .home-research .topic-image{height:210px}.home-page .home-information{padding-top:34px;margin-bottom:48px}.home-page .home-information .person-grid h2{font-size:26px}.home-page .home-information .position{font-size:14px}.home-page .home-information .person-grid .bio-detail{font-size:13px}.home-page .home-information .news-row h3{font-size:15px}}
+@media(max-width:650px){
+ .home-page .home-information .person-grid{row-gap:12px;align-items:start}
+ .home-page .home-information .person-grid>div{display:contents}
+ .home-page .home-information .person-grid>img{grid-column:1;grid-row:1/4}
+ .home-page .home-information .person-grid .eyebrow{grid-column:2;grid-row:1;margin:0;align-self:end}
+ .home-page .home-information .person-grid h2{grid-column:2;grid-row:2;margin:0}
+ .home-page .home-information .person-grid .position{grid-column:2;grid-row:3;margin:0}
+ .home-page .home-information .person-grid .bio-detail{grid-column:1/-1;grid-row:4;margin:6px 0 0;font-size:14px}
+ .home-page .home-information .person-grid .text-link{grid-column:1/-1;grid-row:5;justify-self:start;margin-top:4px}
+}

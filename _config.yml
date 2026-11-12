@@ -16,7 +16,7 @@ remote_theme      : "mmistakes/minimal-mistakes"
 # ────────────────────────────────────────────────
 author:
   name        : "Yechan Noh"
-  avatar      : "/assets/img/people/yechan-noh-2026.jpg"
+  avatar      : "/assets/img/people/yechan-noh-2026-2.png"
   bio         : "Provost’s Postdoctoral Fellow, University of Notre Dame"
   location    : "Notre Dame, Indiana, USA"
   email       : "ynoh@nd.edu"
@@ -92,7 +92,7 @@ social:
     - "https://scholar.google.com/citations?user=0zdqbtIAAAAJ"
     - "https://www.linkedin.com/in/yechan-noh-phd-421906155/"
 
-og_image         : "/assets/img/people/yechan-noh-2026.jpg"  # ⚑ optional OG image
+og_image         : "/assets/img/people/yechan-noh-2026-2.png"  # ⚑ optional OG image
 og_description   : "CMBL · Molecular transport, interfacial dynamics, and biomimetic function."
 
 # ────────────────────────────────────────────────

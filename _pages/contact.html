@@ -1,128 +1,10 @@
 ---
-layout: default
-title: ""
+layout: cmbl
+title: Contact
 permalink: /contact/
-author_profile: false
+cmbl_main: original-contact
+cmbl_styles: [contact-original]
 ---
-
-<style>
-    /* ───── Brand palette & sizing ───── */
-    :root {
-        --brand-ink: var(--site-ink);
-        /* Shared site palette */
-        --accent-blue: var(--site-accent);
-        /* Shared link accent */
-        --card-max: 520px;
-        /* width of the name card */
-        --fs-lg: 1rem;
-        /* person’s name */
-        --fs-md: 0.85rem;
-        /* headings */
-        --fs-sm: 0.78rem;
-        /* body lines */
-    }
-
-    /* ───── Wrapper grid to center the card ───── */
-    .contact-grid {
-        display: grid;
-        place-items: center;
-        margin: 1.5rem auto 0;
-        padding: 0 1rem;
-        max-width: var(--card-max);
-    }
-
-    /* ───── Card shell ───── */
-    .contact-card {
-        background: var(--site-paper);
-        border: 1px solid var(--site-line);
-        border-radius: 0.5rem;
-        box-shadow: 0 3px 8px rgba(0, 0, 0, .05);
-        padding: 1.1rem 1.3rem 1.3rem;
-        font-family: "Source Sans Pro", sans-serif;
-        line-height: 1.35;
-        font-size: var(--fs-sm);
-    }
-
-    /* ─── 1 Header line: university + logo ─── */
-    .card-header {
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        margin-bottom: 0.85rem;
-    }
-
-    .univ-name {
-        font-family: "Merriweather", serif;
-        font-weight: 800;
-        font-size: var(--fs-lg);
-        color: var(--site-ink);
-        text-transform: uppercase;
-        letter-spacing: 0.02em;
-    }
-
-    .univ-sub {
-        margin: -0.2rem 0 0;
-        font-size: calc(var(--fs-sm) + 0.05rem);
-        color: var(--site-muted);
-    }
-
-    .logo-img {
-        height: 34px;
-        /* adjust as needed */
-        width: auto;
-        object-fit: contain;
-    }
-
-    /* ─── 2 Name & title block ─── */
-    .name {
-        font-family: "Merriweather", serif;
-        font-weight: 700;
-        color: var(--site-ink);
-        font-size: var(--fs-lg);
-        margin: 0;
-    }
-
-    .role {
-        font-style: italic;
-        margin: 0.15rem 0 0.75rem;
-    }
-
-    /* ─── 3 Two-column info layout ─── */
-    .info-grid {
-        display: grid;
-        grid-template-columns: auto 1fr;
-        gap: 0.2rem 1.25rem;
-        /* row / column gap */
-    }
-
-    .info-grid .label {
-        font-weight: 600;
-        color: var(--site-ink);
-    }
-
-    .info-grid .value {
-        color: var(--site-muted);
-        word-break: break-word;
-    }
-
-    .info-grid a {
-        color: var(--accent-blue);
-        text-decoration: none;
-    }
-
-    .info-grid a:hover {
-        text-decoration: underline;
-    }
-</style>
-
-<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css"
-    referrerpolicy="no-referrer" />
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link
-    href="https://fonts.googleapis.com/css2?family=Merriweather:wght@400;700&family=Source+Sans+Pro:wght@400;600&display=swap"
-    rel="stylesheet">
-
 <div class="contact-grid">
     <article class="contact-card">
 
@@ -132,7 +14,7 @@ author_profile: false
                 <div class="univ-name">University of Notre Dame </div>
                 <div class="univ-sub">Department of Chemistry &amp; Biochemistry<br>Department of Aerospace and Mechanical Engineering</div>
             </div>
-            <img src="{{ '/assets/img/contact/UND-logo.png' | relative_url }}" alt="ND logo" class="logo-img">
+            <img src="/assets/img/contact/UND-logo.png" alt="ND logo" class="logo-img">
         </div>
 
         <!-- 2 ▸ Name + role -->

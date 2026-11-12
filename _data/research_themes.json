@@ -4,8 +4,9 @@
     "title": "Ionic Memory and Computing",
     "intro": "This research examines how ionic materials process, retain, and transmit information, toward principles for energy-efficient computing.",
     "image": "/assets/img/research/ionic-neuromorphic.png",
-    "caption": "Biological signaling, artificial neural networks, and ionic devices that reproduce aspects of neuronal function.",
-    "background_html": "A 2026 reference scenario projects that data centers could consume nearly 12% of U.S. electricity by 2030. The human brain operates on roughly 20 watts. <span class=\"muted\">(Smith et al., 2026; Levy & Calvert, 2021).</span>"
+    "caption": "Conceptual comparison of biological neurons, software-based artificial neurons, and ionic approaches to information processing. The schematic illustrates different ways to represent signal transmission and nonlinear response; it does not depict a completed computing device.",
+    "background_html": "A 2026 reference scenario projects that data centers could consume nearly 12% of U.S. electricity by 2030. The human brain operates on roughly 20 watts. <span class=\"muted\">(Smith et al., 2026; Levy & Calvert, 2021).</span>",
+    "alt": "Biological neuron above a software neuron model and a conceptual ionic circuit with artificial synapses and nonlinear transport."
   },
   {
     "id": "selective-transport",
@@ -21,8 +22,9 @@
     "title": "Interfacial Molecular Recognition",
     "intro": "This research studies molecular recognition at interfaces to extend continuous sensing beyond glucose and make molecular measurements more accessible.",
     "image": "/assets/img/research/bio-chemical-sensor.png",
-    "caption": "Target recognition by biological receptors and by receptors attached to sensing electrodes.",
-    "background_html": "A 2021 Lancet Commission estimated that 47% of the world’s population had little or no access to diagnostics. Continuous glucose monitors demonstrate the value of molecular measurements beyond the laboratory. <span class=\"muted\">(Fleming et al., 2021).</span>"
+    "caption": "Molecular recognition in olfaction and electrochemical biosensing. The enlarged views compare target binding by a biological receptor with binding by an electrode-tethered recognition element. The sensing electrode is shown in a tissue setting to illustrate a potential route to physiological monitoring.",
+    "background_html": "A 2021 Lancet Commission estimated that 47% of the world’s population had little or no access to diagnostics. Continuous glucose monitors demonstrate the value of molecular measurements beyond the laboratory. <span class=\"muted\">(Fleming et al., 2021).</span>",
+    "alt": "Olfactory receptors and a tissue-mounted sensing electrode, with enlarged views of molecular binding in biological and electrode-tethered receptors."
   },
   {
     "id": "researcher-directed-automation",

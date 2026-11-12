@@ -1,0 +1,111 @@
+
+    /* ───── Brand palette & sizing ───── */
+    :root {
+        --brand-ink: var(--site-ink);
+        /* Shared site palette */
+        --accent-blue: var(--site-accent);
+        /* Shared link accent */
+        --card-max: 520px;
+        /* width of the name card */
+        --fs-lg: 1rem;
+        /* person’s name */
+        --fs-md: 0.85rem;
+        /* headings */
+        --fs-sm: 0.78rem;
+        /* body lines */
+    }
+
+    /* ───── Wrapper grid to center the card ───── */
+    .contact-grid {
+        display: grid;
+        place-items: center;
+        margin: 1.5rem auto 0;
+        padding: 0 1rem;
+        max-width: var(--card-max);
+    }
+
+    /* ───── Card shell ───── */
+    .contact-card {
+        background: var(--site-paper);
+        border: 1px solid var(--site-line);
+        border-radius: 0.5rem;
+        box-shadow: 0 3px 8px rgba(0, 0, 0, .05);
+        padding: 1.1rem 1.3rem 1.3rem;
+        font-family: "Source Sans Pro", sans-serif;
+        line-height: 1.35;
+        font-size: var(--fs-sm);
+    }
+
+    /* ─── 1 Header line: university + logo ─── */
+    .card-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 0.85rem;
+    }
+
+    .univ-name {
+        font-family: "Merriweather", serif;
+        font-weight: 800;
+        font-size: var(--fs-lg);
+        color: var(--site-ink);
+        text-transform: uppercase;
+        letter-spacing: 0.02em;
+    }
+
+    .univ-sub {
+        margin: -0.2rem 0 0;
+        font-size: calc(var(--fs-sm) + 0.05rem);
+        color: var(--site-muted);
+    }
+
+    .logo-img {
+        height: 34px;
+        /* adjust as needed */
+        width: auto;
+        object-fit: contain;
+    }
+
+    /* ─── 2 Name & title block ─── */
+    .name {
+        font-family: "Merriweather", serif;
+        font-weight: 700;
+        color: var(--site-ink);
+        font-size: var(--fs-lg);
+        margin: 0;
+    }
+
+    .role {
+        font-style: italic;
+        margin: 0.15rem 0 0.75rem;
+    }
+
+    /* ─── 3 Two-column info layout ─── */
+    .info-grid {
+        display: grid;
+        grid-template-columns: auto 1fr;
+        gap: 0.2rem 1.25rem;
+        /* row / column gap */
+    }
+
+    .info-grid .label {
+        font-weight: 600;
+        color: var(--site-ink);
+    }
+
+    .info-grid .value {
+        color: var(--site-muted);
+        word-break: break-word;
+    }
+
+    .info-grid a {
+        color: var(--accent-blue);
+        text-decoration: none;
+    }
+
+    .info-grid a:hover {
+        text-decoration: underline;
+    }
+
+html{font-size:16px}@media(min-width:768px){html{font-size:18px}}
+.original-contact{padding:30px 0 90px;min-height:65vh}

@@ -5,7 +5,7 @@ const artwork=await createLogoArtwork();
 const ionSprites=createIonSprites(SPECIES.map(species=>species.color));
 const canvas=document.querySelector('#scene'),ctx=canvas.getContext('2d'),worker=new Worker(new URL('./worker.mjs?v=friction8-20261010',import.meta.url),{type:'module'});
 const PLAYBACK_RATE=1.5;
-let state=null,paused=false,pending=false,timer=0,requestedAt=0,dpr=1,w=1000,h=238,visible=true;
+let state=null,paused=false,pending=false,timer=0,requestedAt=0,dpr=1,w=1000,h=238,visible=false;
 let membraneColor='#182d38';
 const reduced=matchMedia('(prefers-reduced-motion: reduce)');paused=reduced.matches;
 const active=()=>!paused&&visible&&!document.hidden;
@@ -13,7 +13,7 @@ const fieldIndicator=document.querySelector('#electric-field-indicator');
 function size(){membraneColor=getComputedStyle(canvas).getPropertyValue('--site-ink').trim()||'#182d38';const r=canvas.getBoundingClientRect();w=r.width;h=r.height;dpr=Math.min(2,devicePixelRatio||1);canvas.width=Math.round(w*dpr);canvas.height=Math.round(h*dpr);draw();}
 function draw(){
  if(!state)return;ctx.setTransform(dpr,0,0,dpr,0,0);ctx.clearRect(0,0,w,h);const sx=w/state.width,sy=h/state.viewHeight,C=state.center-state.viewY,mh=state.membraneHalf;
- const gradient=ctx.createLinearGradient(0,0,0,h);gradient.addColorStop(0,'#ffffff');gradient.addColorStop(.5,'#f7fafb');gradient.addColorStop(1,'#ffffff');ctx.fillStyle=gradient;ctx.fillRect(0,0,w,h);
+ const gradient=ctx.createLinearGradient(0,0,0,h);gradient.addColorStop(0,'#ffffff');gradient.addColorStop(.5,'#ffffff');gradient.addColorStop(1,'#ffffff');ctx.fillStyle=gradient;ctx.fillRect(0,0,w,h);
  const fieldOn=state.field>0;
  if(fieldIndicator)fieldIndicator.hidden=!fieldOn;
  canvas.dataset.fieldIndicator=fieldOn?'on':'off';
@@ -32,10 +32,10 @@ function draw(){
  // the physical aperture; light is decorative and does not change collision geometry.
  const top=(C-mh)*sy,bottom=(C+mh)*sy,thickness=bottom-top;
  const surface=ctx.createLinearGradient(0,top,0,bottom);
- surface.addColorStop(0,'#7095a3');surface.addColorStop(.16,'#365968');
- surface.addColorStop(.43,membraneColor);surface.addColorStop(.82,'#213e4b');surface.addColorStop(1,'#486c7b');
+ surface.addColorStop(0,'#8b9fa8');surface.addColorStop(.16,'#536f7e');
+ surface.addColorStop(.43,membraneColor);surface.addColorStop(.82,'#223c4b');surface.addColorStop(1,'#6a8795');
  const sheen=ctx.createLinearGradient(0,top,0,top+thickness*.22);
- sheen.addColorStop(0,'#c5dce599');sheen.addColorStop(1,'#c5dce500');
+ sheen.addColorStop(0,'#d5e1e799');sheen.addColorStop(1,'#d5e1e700');
  const shadow=ctx.createLinearGradient(0,bottom,0,bottom+thickness*.5);
  shadow.addColorStop(0,'#182d3820');shadow.addColorStop(1,'#182d3800');
  const corner=state.edgeRadius*sx;

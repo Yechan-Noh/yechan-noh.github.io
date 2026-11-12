@@ -1,11 +1,14 @@
 ---
-layout: default
+layout: cmbl
 title: "Research"
 permalink: /research/
 author_profile: false
 ---
-<link rel="stylesheet" href="{{ "/assets/css/funding-membrane.css" | relative_url }}?v={{ site.time | date: "%s" }}">
+
 <div class="mt-page research-page">
+<figure class="research-overview-figure">
+<a href="/assets/img/research/molecular-biomimetics-overview.png" aria-label="View full-size Molecular Biomimetics overview"><img src="/assets/img/research/molecular-biomimetics-overview.png" alt="Molecular biomimetics: molecular recognition, selectivity, and gating and memory, with biological functions as inspiration." fetchpriority="high"></a>
+</figure>
 <div class="research-topic-grid">
 {% for theme in site.data.research_themes %}
 <section class="research-panel research-topic-card" id="{{ theme.id }}" aria-labelledby="{{ theme.id }}-title">
@@ -22,7 +25,7 @@ author_profile: false
     <h2 id="support-title">Funding &amp; Support</h2>
     <div class="funding-membrane-controls"><button id="pause" type="button" aria-pressed="false">Pause animation</button></div>
   </div>
-  <div class="funding-membrane-stage">
+  <div class="funding-scroll" tabindex="0" role="region" aria-label="Funding simulation; scroll horizontally on a narrow screen"><div class="funding-membrane-stage">
     <div id="electric-field-indicator" class="electric-field-indicator" hidden>
       <span>Electric field</span>
       <svg viewBox="0 0 32 64" aria-hidden="true" focusable="false"><path d="M12 2h8v39h10L16 62 2 41h10Z" fill="currentColor"/></svg>
@@ -31,6 +34,6 @@ author_profile: false
     <div class="funding-row-label funding-row-label--previous">Previous</div>
     <canvas id="scene" role="img" aria-label="Current support: ACCESS, University of Notre Dame, NCSA, and Texas Advanced Computing Center. Previous support: National Science Foundation, University of Illinois Urbana-Champaign, University of California Berkeley, Kwanjeong Educational Foundation, NIST, and University of Colorado Boulder. Animated ions travel through a twenty-four-pore membrane among the logos.">Current: ACCESS, Notre Dame, NCSA, TACC. Previous: NSF, Illinois, Berkeley, Kwanjeong, NIST, Colorado Boulder.</canvas>
   </div>
-</section>
+</div></section>
 <script type="module" src="{{ "/assets/js/funding-membrane/view.mjs" | relative_url }}?v={{ site.time | date: "%s" }}"></script>
 </div>

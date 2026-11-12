@@ -1,0 +1,26 @@
+/* Original looping research collection under the new molecular hero. */
+.home-research{padding:70px 0 75px}
+.home-research .section-top{display:flex;align-items:center;gap:26px;margin-bottom:26px}
+.home-research .section-top h2{margin-right:auto;font-size:34px}
+.home-research .plain-link{font-size:12px;border-bottom:1px solid #a8bac4;padding-bottom:9px}
+.home-research .plain-link span{padding-left:28px}
+.home-research .topic-controls{display:flex;gap:7px}
+.home-research .topic-controls[hidden]{display:none}
+.home-research .topic-controls button{width:34px;height:34px;border:1px solid #dbe3e8;border-radius:50%;color:#456477;background:#fff;cursor:pointer}
+.home-research .topic-controls button:hover{background:#f3f7f9}
+.home-refresh .home-research .topic-track{grid-auto-columns:max(280px,calc((100% - 48px)/4))}
+.home-refresh .home-research .topic-preview{border:1px solid #dce4e9;border-top:2px solid #8ca5b3;border-radius:7px;padding:20px 20px 25px;background:#fff}
+.home-refresh .home-research .topic-preview:hover,.home-refresh .home-research .topic-preview:focus-within{border-color:#6f91a3;border-top-color:#476d83;box-shadow:0 5px 18px rgb(43 64 49 / 7%)}
+.home-refresh .home-research .topic-image{display:flex;align-items:center;justify-content:center;height:215px;border-bottom-color:#e2e8ec}
+.home-research .topic-image img{width:100%;height:100%;object-fit:contain}
+.home-refresh .home-research .topic-preview h3{font-size:19px;font-weight:500;letter-spacing:-.3px;line-height:1.35}
+.home-refresh .home-research .topic-preview>p{font-size:13px;line-height:1.7;color:var(--muted)}
+@media(max-width:650px){
+ .home-research{padding:45px 0 50px}
+ .home-research .section-top{flex-wrap:wrap;gap:18px}
+ .home-research .section-top h2{font-size:30px}
+ .home-research .plain-link{font-size:11px}
+ .home-research .topic-controls{margin-left:auto}
+ .home-refresh .home-research .topic-track{grid-auto-columns:min(330px,calc(100% - 28px))}
+ .home-refresh .home-research .topic-image{height:208px}
+}

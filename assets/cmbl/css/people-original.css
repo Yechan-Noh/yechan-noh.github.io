@@ -1,0 +1,111 @@
+/* One centered reading frame avoids a visually heavy appointments column. */
+.mt-page.people-page {
+  box-sizing: border-box;
+  width: 100%;
+  margin-inline: auto;
+}
+.people-page .profile-content {
+  width: 100%;
+  max-width: 780px;
+  margin-inline: auto;
+}
+.people-page .profile-content > .profile-header {
+  width: 100%;
+  max-width: none;
+  margin-inline: 0;
+  grid-template-columns: 200px minmax(0, 1fr);
+  gap: 40px;
+}
+.people-page .profile-content > .profile-columns {
+  display: block;
+  width: 100%;
+  max-width: none;
+  margin-inline: 0;
+}
+.people-page .profile-content .mt-section {
+  width: 100%;
+  max-width: none;
+  margin: 22px 0 0;
+  padding-top: 18px;
+}
+.people-page .profile-content .mt-section h2 {
+  margin-bottom: 15px;
+  font-size: 24px;
+}
+.people-page .profile-content .profile-timeline {
+  display: grid;
+  grid-template-columns: 120px minmax(0, 1fr);
+  column-gap: 24px;
+  row-gap: 16px;
+  margin: 0;
+}
+.people-page .profile-content .profile-timeline dt {
+  margin: 0;
+  padding-top: 1px;
+  font-size: 13px;
+  line-height: 1.6;
+}
+.people-page .profile-content .profile-timeline dd {
+  margin: 0;
+  min-width: 0;
+  line-height: 1.5;
+}
+.people-page .profile-content .honors-list {
+  margin: 0;
+  padding-left: 19px;
+}
+.people-page .profile-content .honors-list li {
+  padding-left: 3px;
+  margin-bottom: 3px;
+  font-size: 15px;
+  line-height: 1.55;
+}
+@media (max-width: 760px) {
+  .people-page .profile-content {
+    max-width: 620px;
+  }
+  .people-page .profile-content > .profile-header {
+    grid-template-columns: 115px minmax(0, 1fr);
+    gap: 22px;
+  }
+  .people-page .profile-content .profile-timeline {
+    grid-template-columns: 94px minmax(0, 1fr);
+    gap: 14px 18px;
+  }
+  .people-page .profile-content .mt-section h2 {
+    font-size: 22px;
+  }
+}
+@media (max-width: 480px) {
+  .people-page .profile-content > .profile-header {
+    grid-template-columns: 92px minmax(0, 1fr);
+    gap: 16px;
+  }
+  .people-page .profile-content .profile-timeline {
+    display: block;
+  }
+  .people-page .profile-content .profile-timeline dt:not(:first-child) {
+    margin-top: 16px;
+  }
+  .people-page .profile-content .profile-timeline dd {
+    margin-top: 3px;
+  }
+}
+
+/* Small optical offset requested for the desktop composition. */
+@media (min-width: 900px) {
+  .people-page .profile-content {
+    position: relative;
+    left: 24px;
+  }
+}
+
+/* Remove preview-only typography and spacing; retain original People layout. */
+.original-people .profile-header h1{font-family:inherit;font-weight:700;letter-spacing:-1px;margin-top:0}
+.original-people .profile-position{font-size:inherit;line-height:inherit}
+.original-people .profile-header p:not(.eyebrow):not(.profile-position){font-size:inherit;line-height:inherit;color:inherit}
+.original-people .mt-section{padding-bottom:0}
+.original-people .honors-list li{padding-bottom:0}
+.original-people .profile-timeline strong{font-weight:700}
+@media(max-width:760px){.original-people .profile-header h1{letter-spacing:-.5px}.original-people .profile-header p:not(.eyebrow){font-size:13px}}
+.original-people .mt-section h2{font-family:inherit;font-weight:700;letter-spacing:normal}
