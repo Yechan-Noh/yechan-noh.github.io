@@ -12,13 +12,14 @@
     let inView = true;
     let frame = 0;
     let animationFrame = 0;
+    let sceneScale = 1, viewWidth = 0, viewHeight = 0;
 
     /* ─── Mouse repulsion ────────────────────────────────────────────── */
     const mouse = { x: null, y: null, radius: 60 };
     canvas.addEventListener('mousemove', e => {
         const r = canvas.getBoundingClientRect();
-        mouse.x = e.clientX - r.left;
-        mouse.y = e.clientY - r.top;
+        mouse.x = (e.clientX - r.left) / sceneScale;
+        mouse.y = (e.clientY - r.top) / sceneScale;
     });
     canvas.addEventListener('mouseleave', () => { mouse.x = mouse.y = null; });
 
@@ -89,11 +90,11 @@
         particles.length = 0;
 
         const TEXT = 'CMBL';
-        let fontSize = 1.25 * Math.min(140, canvas.clientWidth / 3.4);
+        let fontSize = 1.25 * Math.min(140, viewWidth / 3.4);
         const temp = document.createElement('canvas');
         const tctx = temp.getContext('2d');
         tctx.font = `bold ${fontSize}px Inter, Helvetica, sans-serif`;
-        fontSize *= Math.min(1, (canvas.clientWidth - 32) / tctx.measureText(TEXT).width);
+        fontSize *= Math.min(1, (viewWidth - 32) / tctx.measureText(TEXT).width);
         tctx.font = `bold ${fontSize}px Inter, Helvetica, sans-serif`;
         temp.width = Math.ceil(tctx.measureText(TEXT).width) + 20;
         temp.height = Math.ceil(fontSize + 40);
@@ -105,8 +106,8 @@
         tctx.fillText(TEXT, temp.width / 2, temp.height / 2);
 
         const img = tctx.getImageData(0, 0, temp.width, temp.height).data;
-        const offX = (canvas.clientWidth - temp.width) / 2;
-        const offY = (canvas.clientHeight - temp.height) / 2;
+        const offX = (viewWidth - temp.width) / 2;
+        const offY = (viewHeight - temp.height) / 2;
         const gap = 5;
 
         for (let y = 0; y < temp.height; y += gap) {
@@ -146,7 +147,7 @@
         ctx.clearRect(0, 0, canvas.width, canvas.height);
 
         /* move the invisible repeller */
-        const w = canvas.clientWidth;
+        const w = viewWidth;
         autoCircle.x += autoCircle.vx;
         if (autoCircle.x > w + autoCircle.radius) autoCircle.x = -autoCircle.radius;
 
@@ -160,12 +161,16 @@
 
     /* ─── Responsive / Hi-DPI handling ──────────────────────────────── */
     function resize() {
-        const dpr = Math.min(3, Math.max(2.5, window.devicePixelRatio || 1));
-        ctx.setTransform(1, 0, 0, 1, 0, 0);          // reset transform
-        canvas.width = canvas.clientWidth * dpr;
-        canvas.height = canvas.clientHeight * dpr;
-        ctx.setTransform(dpr, 0, 0, dpr, 0, 0);      // scale all draws
-        autoCircle.y = canvas.clientHeight * 0.46;
+        // Keep desktop-density lettering on phones, then render at native pixel density.
+        const width = canvas.clientWidth, height = canvas.clientHeight;
+        sceneScale = Math.min(1, width / 320);
+        viewWidth = width / sceneScale;
+        viewHeight = height / sceneScale;
+        const dpr = Math.max(3, window.devicePixelRatio || 1);
+        canvas.width = Math.round(width * dpr);
+        canvas.height = Math.round(height * dpr);
+        ctx.setTransform(dpr * sceneScale, 0, 0, dpr * sceneScale, 0, 0);
+        autoCircle.y = viewHeight * 0.46;
         initParticles();
     }
 
