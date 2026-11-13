@@ -329,7 +329,7 @@
     const ownerStatus=window.MTSGAnalytics?.status();
     find('[data-ov-owner-status]').textContent=ownerStatus?.persisted ? 'Your visits from this browser are excluded from now on, even after closing this overview. Historical data is unchanged.' : 'Owner exclusion is active for this page. Allow site storage to keep this browser excluded on future visits.';
     const state={weekOffset:0,day:null,metric:'sessions',country:'',device:'',pageSort:'views',search:'',locationSearch:'',tab:'overview',mapView:'us',city:'',visitKind:''};
-    let contentReady=false,visits,controller,revision=0,removed=false,timezone=reportingTimezone,parent,detail,period,maps,loadedAt;
+    let contentReady=false,visits,controller,revision=0,removed=false,timezone=reportingTimezone,parent,detail,period,maps,loadedAt,gaRetryAfter=0;
     const cache=new Map();
     const mapPromise=fetch(BASE+'/assets/js/owner/city-map.json',{credentials:'omit',signal:AbortSignal.timeout(6000)}).then(r=>r.ok?r.json():null).then(cities=>({cities})).catch(()=>null);
     const clearData=()=> {parent=detail=null;cache.clear();content.replaceChildren();content.hidden=true;};
@@ -364,7 +364,7 @@
       const session=getSession();
       if(!session){clearData();status.textContent='Renew your Google sign-in to load the report.';connect.hidden=false;refresh.disabled=false;root.removeAttribute('aria-busy');return;}
       try {
-        if(fresh){cache.clear();window.MTSGVisits?.clear();}
+        if(fresh){cache.clear();window.MTSGVisits?.clear();gaRetryAfter=0;}
         if(!timezone) {
           const bootstrap=await fetchReports({zone:request({start:'yesterday',end:'yesterday'},[],['sessions'])},{propertyId,session,signal});
           timezone=bootstrap.zone.metadata?.timeZone;
@@ -391,8 +391,9 @@
           // These old reports no longer feed any visible component.
           const specs=Object.fromEntries(['current','daily','previous','countries','locations','pages','sources','returning','research','links','cityPages','hours','events'].filter(k=>all[k]).map(k=>[k,all[k]]));
           const core={current:specs.current,daily:specs.daily};
-          reports=await fetchReports(core,{propertyId,session,signal,partial:true});
+          reports=Date.now()<gaRetryAfter?{}:await fetchReports(core,{propertyId,session,signal,partial:true});
           if(!reports.current||!reports.daily) {
+            gaRetryAfter=Date.now()+180000;
             if(!window.MTSGVisits?.snapshot)throw new Error('Summary reports are unavailable. Open Visits to load exported records.');
             status.textContent='Google summary unavailable; loading daily exported records…';
             const exported=await window.MTSGVisits.snapshot({range,filters:{country:state.country,device:state.device},token:session.token,backendUrl:session.backendUrl,signal:AbortSignal.any([signal,AbortSignal.timeout(65000)])});
