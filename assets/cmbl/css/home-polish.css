@@ -50,8 +50,8 @@
  mask-image:linear-gradient(to bottom,#000 76%,rgba(0,0,0,.94) 81%,rgba(0,0,0,.72) 87%,rgba(0,0,0,.35) 93%,rgba(0,0,0,.08) 98%,transparent 100%);
 }
 /* Keep the opening composed at large desktop widths. */
-.home-page .opening{width:100%;max-width:1280px;height:clamp(700px,59.375vw,760px);margin-inline:auto}
-.home-page .hero-title h1{font-size:clamp(78px,8.3vw,106px)}
+.home-page .opening{width:100%;max-width:1536px;height:clamp(700px,59.375vw,912px);margin-inline:auto}
+.home-page .hero-title h1{font-size:clamp(78px,8.3vw,127.2px)}
 .home-page .scene img{mask-image:linear-gradient(to bottom,#000 76%,rgba(0,0,0,.72) 87%,rgba(0,0,0,.35) 93%,transparent 100%)}
 @media(min-width:1280px){
  .home-page .scene{top:55px;left:0;right:0;bottom:12px}
