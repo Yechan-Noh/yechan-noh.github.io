@@ -134,3 +134,10 @@
  .home-page .hero-signature{width:200px}
  .home-page .hero-signature #titleCanvas{width:200px;height:90px}
 }
+
+/* Expanded hero artwork: image pixels extend through the viewport. */
+@media(min-width:651px){
+.home-page .opening{padding:0;background:#fff}
+.home-page .scene{width:min(100%,2000px);height:clamp(650px,calc(100svh + 8px),1000px);aspect-ratio:auto;overflow:hidden}
+.home-page .scene img{left:0;top:0;width:100%;height:100%;object-fit:cover;object-position:center center;-webkit-mask-image:linear-gradient(to right,transparent,#000 max(0px,calc((100% - 1600px)/2)),#000 min(100%,calc((100% + 1600px)/2)),transparent),linear-gradient(to bottom,transparent,#000 60px,#000 calc(100% - 100px),transparent);mask-image:linear-gradient(to right,transparent,#000 max(0px,calc((100% - 1600px)/2)),#000 min(100%,calc((100% + 1600px)/2)),transparent),linear-gradient(to bottom,transparent,#000 60px,#000 calc(100% - 100px),transparent)}
+}
