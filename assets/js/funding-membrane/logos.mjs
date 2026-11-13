@@ -1,3 +1,4 @@
+import {readArtwork,saveArtwork} from './artwork-cache.mjs?v=prepare-20261113';
 import {GEOMETRY} from './core.mjs?v=fast-contacts-20261010';
 // Original funding artwork, with the same crop windows as the preserved site.
 export const LOGOS=[
@@ -14,6 +15,8 @@ export const LOGOS=[
 ];
 export async function createLogoArtwork(){
  const mw=GEOMETRY.maskWidth,mh=GEOMETRY.maskHeight;
+ const cached=await readArtwork(mw,mh);if(cached)return cached;
+ const yieldWork=()=>new Promise(resolve=>setTimeout(resolve,0));
  const art=document.createElement('canvas');art.width=mw*2;art.height=mh*2;const ctx=art.getContext('2d',{willReadFrequently:true});
  const images=await Promise.all(LOGOS.map(row=>new Promise((resolve,reject)=>{const img=new Image();img.onload=()=>resolve(img);img.onerror=()=>reject(Error('Logo load failed: '+row[0]));img.src=new URL('../../img/funding/'+row[0],import.meta.url).href;})));
  LOGOS.forEach(([file,cx,cy,w,ratio,scale,left,top],i)=>{
@@ -22,14 +25,17 @@ export async function createLogoArtwork(){
  });
  const rgba=ctx.getImageData(0,0,art.width,art.height);
  // Remove white matte for rendering and derive collisions from the same visible ink.
- for(let p=0;p<rgba.data.length;p+=4){const ink=1-Math.min(rgba.data[p],rgba.data[p+1],rgba.data[p+2])/255;if(ink<.06)rgba.data[p+3]=0;}
+ for(let p=0;p<rgba.data.length;p+=4){if(p%131072===0)await yieldWork();const ink=1-Math.min(rgba.data[p],rgba.data[p+1],rgba.data[p+2])/255;if(ink<.06)rgba.data[p+3]=0;}
  ctx.putImageData(rgba,0,0);const base=new Uint8Array(mw*mh),mask=new Uint8Array(base.length);
- for(let y=0;y<mh;y++)for(let x=0;x<mw;x++){
+ for(let y=0;y<mh;y++){if(y%16===0)await yieldWork();for(let x=0;x<mw;x++){
   let coverage=0;for(let oy=0;oy<2;oy++)for(let ox=0;ox<2;ox++){const p=((y*2+oy)*art.width+x*2+ox)*4;coverage+=rgba.data[p+3]/255*(1-Math.min(rgba.data[p],rgba.data[p+1],rgba.data[p+2])/255);}
   base[y*mw+x]=coverage/4>.14?1:0;
  }
+ }
  // Minkowski expansion by ion radius (0.24 units) for center-based collision queries.
  const expand=Math.ceil(GEOMETRY.radius*mw/GEOMETRY.width);
- for(let y=0;y<mh;y++)for(let x=0;x<mw;x++)if(base[y*mw+x])for(let oy=-expand;oy<=expand;oy++)for(let ox=-expand;ox<=expand;ox++)if(ox*ox+oy*oy<=(GEOMETRY.radius*mw/GEOMETRY.width+.5)**2){const xx=x+ox,yy=y+oy;if(xx>=0&&xx<mw&&yy>=0&&yy<mh)mask[yy*mw+xx]=1;}
+ for(let y=0;y<mh;y++){if(y%16===0)await yieldWork();for(let x=0;x<mw;x++)if(base[y*mw+x])for(let oy=-expand;oy<=expand;oy++)for(let ox=-expand;ox<=expand;ox++)if(ox*ox+oy*oy<=(GEOMETRY.radius*mw/GEOMETRY.width+.5)**2){const xx=x+ox,yy=y+oy;if(xx>=0&&xx<mw&&yy>=0&&yy<mh)mask[yy*mw+xx]=1;}
+ }
+ await saveArtwork({art,mask});
  return {art,mask};
 }

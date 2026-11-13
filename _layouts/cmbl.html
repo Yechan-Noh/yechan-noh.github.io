@@ -12,5 +12,7 @@
 <footer id="mtsg-footer" class="shell site-footer"><span><button type="button" class="footer-quiet" data-overview-arm aria-label="Copyright">©</button> <button type="button" class="footer-quiet" data-overview-open>CMBL</button> · Yechan Noh</span><a href="mailto:ynoh@nd.edu">ynoh@nd.edu</a></footer>
 <script defer src="{{ '/assets/js/owner/footer-entry.js' | relative_url }}" data-dashboard="{{ '/dashboard/' | relative_url }}"></script>
 {% include analytics.html %}
-{% for script in page.cmbl_scripts %}<script defer src="{{ '/assets/cmbl/js/' | append: script | append: '.js' | relative_url }}?v=20261113-6"></script>{% endfor %}
+<script defer src="{{ "/assets/cmbl/js/animation-preparation.js" | relative_url }}?v=20261113-prepare1"></script>
+{% for script in page.cmbl_scripts %}<script defer src="{{ '/assets/cmbl/js/' | append: script | append: '.js' | relative_url }}?v=20261113-prepare1"></script>{% endfor %}
+<script defer src="{{ "/assets/cmbl/js/navigation-warmup.js" | relative_url }}?v=20261113-prepare1" data-root="{{ "/" | relative_url }}"></script>
 </body></html>

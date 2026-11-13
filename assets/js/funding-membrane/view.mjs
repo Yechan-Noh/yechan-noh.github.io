@@ -1,6 +1,6 @@
 import {createIonSprites} from './ion-sprites.mjs?v=friction8-20261010';
 import {SPECIES,SETTINGS,GEOMETRY} from './core.mjs?v=friction8-20261010';
-import {createLogoArtwork} from './logos.mjs?v=previous108-20261010';
+import {createLogoArtwork} from './logos.mjs?v=prepare-20261113';
 const artwork=await createLogoArtwork();
 const ionSprites=createIonSprites(SPECIES.map(species=>species.color));
 const canvas=document.querySelector('#scene'),ctx=canvas.getContext('2d'),worker=new Worker(new URL('./worker.mjs?v=friction8-20261010',import.meta.url),{type:'module'});
