@@ -87,11 +87,11 @@
 
 /* Compact phone composition; preserve the approved desktop artwork scale. */
 @media(max-width:650px){
- .home-page .opening{padding-top:112px;padding-bottom:20px}
- .home-page .hero-title{top:18px}
- .home-page .hero-title h1{margin-top:0;font-size:clamp(43px,11.8vw,66px);line-height:1.02;letter-spacing:-1.8px}
- .home-page .hero-signature{top:112px;right:6%;width:132px;opacity:.9}
- .home-page .hero-signature #titleCanvas{width:132px;height:62px}
+ .home-page .opening{padding-top:20px;padding-bottom:20px}
+ .home-page .hero-title{top:42px}
+ .home-page .hero-title h1{margin-top:0;font-size:clamp(34px,10vw,56px);line-height:1.02;letter-spacing:-1.4px}
+ .home-page .hero-signature{top:18px;right:6%;width:110px;opacity:.9}
+ .home-page .hero-signature #titleCanvas{width:110px;height:52px}
  .home-page .hero-signature .animation-toggle{width:44px;height:44px;right:-7px;bottom:-26px}
  .home-page .home-research{padding:20px 0 30px}
  .home-page .home-research .section-top{display:grid;grid-template-columns:1fr auto;gap:8px 14px;margin-bottom:18px;align-items:center}
