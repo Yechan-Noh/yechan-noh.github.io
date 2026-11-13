@@ -21,7 +21,7 @@
   document.body.append(view); panel.hidden=true;
   let overview;
   function close(){overview?.dispose();try{sessionStorage.removeItem(key);}catch{}location.assign(base+'/');}
-  overview=window.MTSGOverview.mount({root:view,propertyId:'499333574',getSession:()=>connection,onRenew:()=>overview.reload(),onSignOut:close});
+  overview=window.MTSGOverview.mount({root:view,propertyId:'499333574',reportingTimezone:'America/Denver',getSession:()=>connection,onRenew:()=>overview.reload(),onSignOut:close});
   window.addEventListener('pagehide',()=>overview?.dispose(),{once:true});
   window.addEventListener('pageshow',e=>{if(e.persisted)location.reload();});
 })();

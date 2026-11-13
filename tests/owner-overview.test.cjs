@@ -127,3 +127,29 @@ test('parsed response reuse preserves numeric results and does not cache invalid
  const bad=report([],['sessions'],[['invalid']]);
  assert.throws(()=>api.rows(bad));assert.throws(()=>api.rows(bad));
 });
+test('proxy requests use at most three workers and preserve successful reports after a failure',async()=>{
+ const specs=Object.fromEntries(Array.from({length:8},(_,i)=>['r'+i,{dimensions:[],metrics:[{name:'sessions'}],limit:String(i)}]));
+ let active=0,peak=0,done=0;
+ const out=await api.fetchReports(specs,{session:{backendUrl:'https://proxy.test'},partial:true,onProgress:()=>done++,fetcher:async(url,init)=>{
+   active++;peak=Math.max(peak,active);const i=Number(JSON.parse(init.body).requests[0].limit);
+   await new Promise(r=>setTimeout(r,2));active--;
+   if(i===1)return {ok:false,status:504,json:async()=>({error:{message:'Timed out'}})};
+   return {ok:true,json:async()=>({reports:[report([],['sessions'],[[i]])]})};
+ }});
+ assert.equal(peak,3);assert.equal(done,8);assert.equal(Object.keys(out).length,7);assert.equal(out.failures.r1,'Timed out');assert.equal(api.rows(out.r7)[0].sessions,7);
+});
+test('a stalled individual report times out without blocking later reports',async()=>{
+ const specs={slow:{dimensions:[],metrics:[{name:'sessions'}]},ready:{dimensions:[],metrics:[{name:'sessions'}]}};
+ let calls=0;
+ const result=await api.fetchReports(specs,{session:{backendUrl:'https://proxy.test'},partial:true,timeoutMs:10,fetcher:async(url,{signal})=>{
+   if(calls++===0)return new Promise((resolve,reject)=>signal.addEventListener('abort',()=>reject(signal.reason),{once:true}));
+   return {ok:true,json:async()=>({reports:[report([],['sessions'],[[2]])]})};
+ }});
+ assert.equal(api.rows(result.ready)[0].sessions,2);assert.match(result.failures.slow,/timed out/);
+});
+test('partial rendering marks missing data unavailable instead of inventing zero visits',()=>{
+ const p=api.periodFor('week','2026-11-13');const detail={current:report([],['sessions'],[[7]]),daily:report(['date'],['sessions'],[['20261113',7]])};
+ const html=api.render(detail,detail,p,{},null,'America/Denver');
+ assert.match(html,/Report unavailable/);assert.match(html,/— in the comparison period/);
+ assert.doesNotMatch(html,/No city-level page activity reported/);
+});

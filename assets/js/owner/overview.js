@@ -210,28 +210,29 @@
     return `<div class="ov-map-shell"><div class="ov-card-title"><div><p class="ov-eyebrow">Geography</p><h2>Where visits begin</h2></div><div class="ov-segments">${['us','world'].map(v=>`<button type="button" data-map-view="${v}" aria-pressed="${v===view}">${v==='us'?'United States':'World'}</button>`).join('')}</div></div><button type="button" data-map-collapse aria-expanded="false" class="ov-map-mobile">Show map</button><div class="ov-map">${shape?`<svg viewBox="0 0 ${shape.width} ${shape.height}" role="group" aria-label="City locations"><path d="${shape.path}" fill="#e5ecee" stroke="#fff" stroke-width=".65"/>${points}</svg>`:'<p class="ov-empty">Loading map. City records are listed alongside.</p>'}<p data-map-detail aria-live="polite">Approximate city centers · ${mapped} mapped locations${locations.length>mapped?' · Other locations remain in the list':''}</p></div></div>`;
   }
   function cityList(data,state) {return `<div class="ov-location-list">${data.filter(r=>`${r.city} ${r.region} ${r.country}`.toLowerCase().includes((state.locationSearch||'').toLowerCase())).slice(0,100).map(r=>`<button type="button" data-city="${esc(JSON.stringify([r.country,r.region,r.city]))}" aria-pressed="${state.city===JSON.stringify([r.country,r.region,r.city])}"><span><strong>${esc(r.city==='(not set)'?'City unavailable':r.city)}</strong><small>${esc(r.region)} · ${esc(r.country)}</small></span><span><b>${number(r.sessions)}</b><small>${duration(r.userEngagementDuration)} active</small></span></button>`).join('')||'<p class="ov-empty">No matching locations.</p>'}</div>`;}
+  const unavailable=()=>'<p class="ov-empty">Report unavailable or still loading. This does not mean zero visits.</p>';
   function renderContent(detail,range) {
     const parsed=Object.fromEntries(['pages','links','events','hours'].filter(k=>detail[k]).map(k=>[k,rows(detail[k])]));
     const {pages=[],links=[],events=[],hours=[]}=parsed;
     const paperLinks=links.filter(r=>paperLink(r.linkUrl));
-    return `<div class="ov-explore"><section class="ov-card"><p class="ov-eyebrow">Content performance</p><h2>Pages and active time</h2><label class="ov-inline-search">Find page<input data-ov-search placeholder="Research, publications…"></label><div data-content-pages>${pageTable(pages)}</div><p class="ov-help">Old and new addresses are combined. Active time is foreground engagement, not measured reading time.</p></section><section class="ov-card"><p class="ov-eyebrow">Next steps</p><h2>Paper links selected</h2>${table(['Destination','Clicks'],paperLinks.map(r=>[esc(r.linkUrl),number(r.eventCount)]),'No paper-link clicks were reported for these dates. Unrecorded clicks cannot be recovered.')}</section></div>
+    return `<div class="ov-explore"><section class="ov-card"><p class="ov-eyebrow">Content performance</p><h2>Pages and active time</h2><label class="ov-inline-search">Find page<input data-ov-search placeholder="Research, publications…"></label><div data-content-pages>${detail.pages?pageTable(pages):unavailable()}</div><p class="ov-help">Old and new addresses are combined. Active time is foreground engagement, not measured reading time.</p></section><section class="ov-card"><p class="ov-eyebrow">Next steps</p><h2>Paper links selected</h2>${!detail.links?unavailable():table(['Destination','Clicks'],paperLinks.map(r=>[esc(r.linkUrl),number(r.eventCount)]),'No paper-link clicks were reported for these dates. Unrecorded clicks cannot be recovered.')}</section></div>
     <section class="ov-card ov-actions"><p class="ov-eyebrow">Research selections</p><h2>Topics, CV and contact</h2><p class="ov-help">Dedicated measurement begins November 6, 2026. Earlier dates were not measured with these events.</p>${!parsed.events?'<p class="ov-empty">Action report is unavailable. Other reports are unaffected.</p>':table(['Recorded action','Count'],events.filter(r=>/^research_(topic|paper|cv|email)$/.test(r.eventName)).map(r=>[esc(r.eventName.replace('research_','')),number(r.eventCount)]),'No dedicated selections recorded yet. This is not evidence that earlier visitors took no action.')}</section>
     <section class="ov-card"><p class="ov-eyebrow">Timing</p><h2>Activity by hour</h2>${parsed.hours?heatmap(hours,range):'<p class="ov-empty">Hourly report is unavailable. Other reports are unaffected.</p>'}</section>`;
   }
   function render(parent,detail,period,state,maps,timezone,deferContent=false) {
     const parsed=Object.fromEntries(Object.entries(detail).map(([k,r])=>[k,rows(r)]));
     const {pages=[],sources=[],locations=[],cityPages=[],hours=[],events=[],links=[]}=parsed;
-    const c=parsed.current?.[0]||emptyTotals(),p=parsed.previous?.[0]||emptyTotals(),range=focusRange(period,state.day),daily=dailySeries(parent.daily,period);
+    const c=parsed.current?.[0]||emptyTotals(),p=parsed.previous?(parsed.previous[0]||emptyTotals()):{},range=focusRange(period,state.day),daily=dailySeries(parent.daily,period);
     const mapLocations=locations,paperLinks=links.filter(r=>paperLink(r.linkUrl));
-    const kpis=[['Visits',c.sessions,'visits','',`${number(p.sessions)} in the comparison period`],['Returning sessions',parsed.returning?(parsed.returning[0]?.sessions||0):null,'visits','returning','GA returning-browser classification'],['Research & Publications',parsed.research?(parsed.research[0]?.sessions||0):null,'visits','research','Sessions viewing either page'],['Paper link clicks',paperLinks.reduce((n,r)=>n+r.eventCount,0),'content','','Recorded outbound paper links']];
+    const kpis=[['Visits',c.sessions,'visits','',`${number(p.sessions)} in the comparison period`],['Returning sessions',parsed.returning?(parsed.returning[0]?.sessions||0):null,'visits','returning','GA returning-browser classification'],['Research & Publications',parsed.research?(parsed.research[0]?.sessions||0):null,'visits','research','Sessions viewing either page'],['Paper link clicks',parsed.links?paperLinks.reduce((n,r)=>n+r.eventCount,0):null,'content','','Recorded outbound paper links']];
     const notes=notices(detail);
     return `<div class="ov-focus"><div><span class="ov-focus-dot"></span><div><p class="ov-eyebrow">${state.day?'Selected day':period.label}</p><h2>${dateLabel(range.start)}${range.end===range.start?'':' – '+dateLabel(range.end)}</h2><p>${state.city?esc(JSON.parse(state.city).slice().reverse().join(', ')):state.country||'All locations'} · ${state.device||'All devices'}</p></div></div><div>${state.day?'<button type="button" data-ov-all>Full period</button>':''}${state.city?'<button type="button" data-clear-city>Clear city</button>':''}</div></div>
     <section class="ov-kpis">${kpis.map(([label,n,tab,kind,note])=>`<button type="button" data-kpi-tab="${tab}" data-kind="${kind}"><span>${label}</span><strong>${number(n)}</strong><small>${note}</small></button>`).join('')}</section><p class="ov-comparison">${number(p.sessions)} → ${number(c.sessions)} visits · Compared with ${dateLabel(range.comparisonStart)}–${dateLabel(range.comparisonEnd)}${range.end===period.today?' · Today is partial; the comparison day is complete':''}</p>
     ${notes.length?`<p class="ov-warning">${notes.map(esc).join(' ')}</p>`:''}
     <section class="ov-card ov-calendar"><div class="ov-card-title"><div><p class="ov-eyebrow">Daily activity · all cities in selected country</p><h2>${dateLabel(period.start)} – ${dateLabel(period.displayEnd)}</h2></div><div class="ov-calendar-controls">${period.mode==='week'?`<button type="button" data-ov-week="-1" aria-label="Previous week">←</button><button type="button" data-ov-week="1" aria-label="Next week" ${state.weekOffset>=0?'disabled':''}>→</button>`:''}<label>Chart<select data-ov-metric aria-label="Daily chart"><option value="sessions" ${state.metric==='sessions'?'selected':''}>Visits</option><option value="screenPageViews" ${state.metric==='screenPageViews'?'selected':''}>Page views</option><option value="userEngagementDuration" ${state.metric==='userEngagementDuration'?'selected':''}>Active time</option></select></label></div></div><div data-daily-chart>${calendar(daily,period,state.day,state.metric||'sessions')}</div></section>
-    <div data-panel="overview"><div class="ov-explore"><section class="ov-card" data-geography>${geography(mapLocations,maps,state)}</section><section class="ov-card"><div class="ov-card-title"><div><p class="ov-eyebrow">Locations</p><h2>Explore a city</h2></div><label>Find location<input data-ov-location-search value="${esc(state.locationSearch||'')}" placeholder="City or region…"></label></div><p class="ov-help">Select a city to filter this period and open its visit records.</p><div data-city-list>${cityList(mapLocations,state)}</div></section></div>
-    <section class="ov-card ov-city-pages"><div class="ov-card-title"><div><p class="ov-eyebrow">Available aggregate data</p><h2>Pages viewed by city</h2><p class="ov-help">Daily totals, including historical records. These rows are not individual visits.</p></div><label>Find city<input data-ov-city-search placeholder="City…"></label></div><div data-ov-city-pages>${cityPagesTable(cityPages)}</div></section>
-    <div class="ov-explore"><section class="ov-card"><p class="ov-eyebrow">Content</p><h2>Pages receiving attention</h2><div data-ov-pages>${pageTable(pages)}</div></section><section class="ov-card"><p class="ov-eyebrow">Discovery</p><h2>How visitors find you</h2>${bars(sources.slice(0,6),'sessionSourceMedium','sessions',c.sessions)}</section></div></div>
+    <div data-panel="overview"><div class="ov-explore"><section class="ov-card" data-geography>${geography(mapLocations,maps,state)}</section><section class="ov-card"><div class="ov-card-title"><div><p class="ov-eyebrow">Locations</p><h2>Explore a city</h2></div><label>Find location<input data-ov-location-search value="${esc(state.locationSearch||'')}" placeholder="City or region…"></label></div><p class="ov-help">Select a city to filter this period and open its visit records.</p><div data-city-list>${detail.locations?cityList(mapLocations,state):unavailable()}</div></section></div>
+    <section class="ov-card ov-city-pages"><div class="ov-card-title"><div><p class="ov-eyebrow">Available aggregate data</p><h2>Pages viewed by city</h2><p class="ov-help">Daily totals, including historical records. These rows are not individual visits.</p></div><label>Find city<input data-ov-city-search placeholder="City…"></label></div><div data-ov-city-pages>${detail.cityPages?cityPagesTable(cityPages):unavailable()}</div></section>
+    <div class="ov-explore"><section class="ov-card"><p class="ov-eyebrow">Content</p><h2>Pages receiving attention</h2><div data-ov-pages>${detail.pages?pageTable(pages):unavailable()}</div></section><section class="ov-card"><p class="ov-eyebrow">Discovery</p><h2>How visitors find you</h2>${detail.sources?bars(sources.slice(0,6),'sessionSourceMedium','sessions',c.sessions):unavailable()}</section></div></div>
     <div data-panel="visits" hidden><section class="ov-card ov-visits" data-ov-visits></section></div>
     <div data-panel="content" hidden>${deferContent?'':renderContent(detail,range)}</div>
     <section class="ov-export"><div><h2>Export this selection</h2><p>Only loaded report rows. Individual visits remain private in this browser.</p></div><div><select data-ov-export-type aria-label="Export report"><option value="daily">Daily summary</option><option value="locations">Locations</option><option value="cityPages">City and pages</option><option value="pages">Pages</option><option value="sources">Traffic sources</option></select><button type="button" data-ov-export>Download CSV</button></div></section>`;
@@ -255,39 +256,47 @@
     }
     return report;
   }
-  async function fetchReports(specs, {propertyId,session,signal,fetcher=fetch,onProgress=()=>{}}) {
-    const entries=Object.entries(specs), result={};
-    // The read-only proxy reliably serves individual reports; batched upstream
-    // calls can stall even when every constituent report succeeds.
-    const batchSize=session.backendUrl?1:5;
-    for(let i=0;i<entries.length;i+=batchSize) {
-      const batch=entries.slice(i,i+batchSize);
-      const response=await fetcher(session.backendUrl ? session.backendUrl+'/reports' : `https://analyticsdata.googleapis.com/v1beta/properties/${encodeURIComponent(propertyId)}:batchRunReports`, {method:'POST',headers:{...(session.backendUrl?{}:{Authorization:'Bearer '+session.token}),'Content-Type':'application/json'},body:JSON.stringify({requests:batch.map(([,query])=>query)}),cache:'no-store',credentials:'omit',signal});
-      if(!response.ok) {
-        const detail=await response.json().catch(()=>({}));
-        if(detail.error?.details?.some(d=>d.reason==='SERVICE_DISABLED'))throw new Error('The Google Analytics Data API needs to be enabled for this app.');
-        if(response.status===401||response.status===403){const error=new Error(session.backendUrl?'The server connection needs attention. Please retry later.':'Renew your Google connection to read this Analytics property.');error.connect=!session.backendUrl;throw error;}
-        if(response.status===429)throw new Error('Google’s request limit was reached. Please retry later.');
-        throw new Error(response.status===400?'Google could not run this combination of report fields. Please retry without filters.':'Analytics could not be loaded. Please retry.');
-      }
-      const body=await response.json();
-      if(!Array.isArray(body.reports)||body.reports.length!==batch.length)throw new Error('The analytics response is incomplete.');
-      body.reports.forEach((rawReport,j)=> {
-        const report=normalizeReport(rawReport,batch[j][1]);
-        try { rows(report); } catch { throw new Error(`Google returned an incomplete ${batch[j][0]} report. Please refresh to retry.`); }
-        result[batch[j][0]]=report;
-      });
-      onProgress(Math.min(i+batchSize,entries.length),entries.length,result);
+  async function fetchReports(specs, {propertyId,session,signal,fetcher=fetch,onProgress=()=>{},partial=false,timeoutMs=22000}) {
+    const entries=Object.entries(specs), result={}, failures={};
+    Object.defineProperty(result,'failures',{value:failures});
+    const batchSize=session.backendUrl?1:5, batches=[];
+    for(let i=0;i<entries.length;i+=batchSize)batches.push(entries.slice(i,i+batchSize));
+    let next=0,done=0;
+    async function run(batch) {
+      const controller=new AbortController();
+      const cancel=()=>controller.abort(signal.reason);
+      if(signal?.aborted)cancel();else signal?.addEventListener('abort',cancel,{once:true});
+      const timer=setTimeout(()=>controller.abort(new DOMException('The report timed out.','TimeoutError')),timeoutMs);
+      try {
+        const response=await fetcher(session.backendUrl ? session.backendUrl+'/reports' : `https://analyticsdata.googleapis.com/v1beta/properties/${encodeURIComponent(propertyId)}:batchRunReports`, {method:'POST',headers:{...(session.backendUrl?{}:{Authorization:'Bearer '+session.token}),'Content-Type':'application/json'},body:JSON.stringify({requests:batch.map(([,query])=>query)}),cache:'no-store',credentials:'omit',signal:controller.signal});
+        const body=await response.json();
+        if(!response.ok) {
+          const error=new Error(response.status===429?'The reporting limit was reached. Please retry later.':body.error?.message||'Analytics could not be loaded. Please retry.');
+          error.connect=!session.backendUrl&&(response.status===401||response.status===403);
+          throw error;
+        }
+        if(!Array.isArray(body.reports)||body.reports.length!==batch.length)throw new Error('The analytics response is incomplete.');
+        const validated=body.reports.map((raw,j)=>{const report=normalizeReport(raw,batch[j][1]);rows(report);return report;});
+        validated.forEach((report,j)=>result[batch[j][0]]=report);
+      } catch(error) {
+        if(signal?.aborted)throw signal.reason||error;
+        if(!partial)throw error;
+        for(const [key] of batch)failures[key]=error.message;
+      } finally {clearTimeout(timer);signal?.removeEventListener('abort',cancel);}
+      done+=batch.length;onProgress(done,entries.length,result);
     }
+    async function worker(){while(next<batches.length){if(signal?.aborted)throw signal.reason;await run(batches[next++]);}}
+    // Bounded concurrency: no 16-request burst, and no serial head-of-line blocking.
+    await Promise.all(Array.from({length:session.backendUrl?Math.min(3,batches.length):1},worker));
     return result;
   }
-  function mount({root,propertyId,clientId,getSession,onRenew,onSignOut}) {
+  function mount({root,propertyId,clientId,getSession,onRenew,onSignOut,reportingTimezone}) {
     root.className='ov-root'; root.innerHTML=layout();
     const find=selector=>root.querySelector(selector), content=find('[data-ov-content]'), status=find('[data-ov-status]'), refresh=find('[data-ov-refresh]'), connect=find('[data-ov-connect]');
     const ownerStatus=window.MTSGAnalytics?.status();
     find('[data-ov-owner-status]').textContent=ownerStatus?.persisted ? 'Your visits from this browser are excluded from now on, even after closing this overview. Historical data is unchanged.' : 'Owner exclusion is active for this page. Allow site storage to keep this browser excluded on future visits.';
     const state={weekOffset:0,day:null,metric:'sessions',country:'',device:'',pageSort:'views',search:'',locationSearch:'',tab:'overview',mapView:'us',city:'',visitKind:''};
-    let contentReady=false,visits,controller,revision=0,removed=false,timezone,parent,detail,period,maps,loadedAt;
+    let contentReady=false,visits,controller,revision=0,removed=false,timezone=reportingTimezone,parent,detail,period,maps,loadedAt;
     const cache=new Map();
     const mapPromise=fetch(BASE+'/assets/js/owner/city-map.json',{credentials:'omit',signal:AbortSignal.timeout(6000)}).then(r=>r.ok?r.json():null).then(cities=>({cities})).catch(()=>null);
     const clearData=()=> {parent=detail=null;cache.clear();content.replaceChildren();content.hidden=true;};
@@ -299,7 +308,7 @@
         contentReady=true;
       }
       if(tab==='visits') {
-        if(!visits&&detail)visits=window.MTSGVisits?.mount({root:find('[data-ov-visits]'),range:focusRange(period,state.day),filters:{country:state.country,device:state.device},timezone,getSession,onRenew,initialCity:state.city,initialKind:state.visitKind,onClearCity:()=>{state.city='';load({focusOnly:true});},onSelectCity:city=>{state.highlightCity=city;find('[data-geography]').innerHTML=geography(rows(detail.locations),maps,state);}});
+        if(!visits&&period)visits=window.MTSGVisits?.mount({root:find('[data-ov-visits]'),range:focusRange(period,state.day),filters:{country:state.country,device:state.device},timezone,getSession,onRenew,initialCity:state.city,initialKind:state.visitKind,onClearCity:()=>{state.city='';load({focusOnly:true});},onSelectCity:city=>{state.highlightCity=city;const geo=find('[data-geography]');if(geo&&detail)geo.innerHTML=geography((detail.locations?rows(detail.locations):[]),maps,state);}});
         visits?.load();
       }
     }
@@ -309,14 +318,14 @@
       activate(state.tab);
     }}
     function updateCountries() {
-      if(state.country)return;
+      if(state.country||!parent?.countries)return;
       const select=find('[data-ov-country]');
       select.innerHTML='<option value="">All countries</option>'+rows(parent.countries).filter(r=>r.country&&r.country!=='(not set)').sort((a,b)=>a.country.localeCompare(b.country)).map(r=>`<option>${esc(r.country)}</option>`).join('');
     }
     async function load({fresh=false,focusOnly=false}={}) {
       const version=++revision;
       controller?.abort();controller=new AbortController();
-      const signal=AbortSignal.any([controller.signal,AbortSignal.timeout(45000)]);
+      const signal=controller.signal;
       connect.hidden=true;refresh.disabled=true;root.setAttribute('aria-busy','true');
       visits?.dispose();visits=null;detail=null;contentReady=false;content.hidden=true;content.replaceChildren();status.textContent='Loading your Google Analytics data…';
       const session=getSession();
@@ -339,30 +348,37 @@
           period=periodFor(find('[data-ov-period]').value,today,{weekOffset:state.weekOffset,start:find('[data-ov-start]').value,end:find('[data-ov-end]').value});
           if(!find('[data-ov-start]').value){find('[data-ov-start]').value=period.start;find('[data-ov-end]').value=period.end;}
         }
+        content.innerHTML='<div data-panel="overview"><p class="ov-empty">Loading summary reports… You can open Visits independently.</p></div><div data-panel="visits" hidden><div data-ov-visits></div></div><div data-panel="content" hidden><p class="ov-empty">Content reports are loading.</p></div>';content.hidden=false;activate(state.tab);
         const range=focusRange(period,state.day), key=JSON.stringify([range.start,range.end,range.comparisonStart,state.country,state.device,state.city]);
         const saved=cache.get(key);
         let reports;
         if(saved&&Date.now()-saved.time<180000)reports=saved.reports;
         else {
-          reports=await fetchReports(requests(range,{country:state.country,device:state.device,city:state.city}),{propertyId,session,signal,onProgress:(done,total,partial)=>{
+          const all=requests(range,{country:state.country,device:state.device,city:state.city});
+          // These old reports no longer feed any visible component.
+          const specs=Object.fromEntries(['current','daily','previous','countries','locations','pages','sources','returning','research','links','cityPages','hours','events'].filter(k=>all[k]).map(k=>[k,all[k]]));
+          reports=await fetchReports(specs,{propertyId,session,signal,partial:true,onProgress:(done,total,partial)=>{
             if(removed||version!==revision)return;
             status.textContent=`Loading reports ${done} of ${total}…`;
             // Show the complete overview before optional timing/action reports.
-            if(partial.devices&&!detail){if(!state.day&&!state.city||!parent)parent=partial;detail=partial;updateCountries();draw();}
+            if(partial.current&&partial.daily&&!detail){if(!state.day&&!state.city||!parent)parent=partial;detail=partial;updateCountries();draw();}
           }});
           if(removed||version!==revision||!getSession())return;
-          cache.set(key,{time:Date.now(),reports});
+          if(!Object.keys(reports.failures||{}).length)cache.set(key,{time:Date.now(),reports});
           if(cache.size>16)cache.delete(cache.keys().next().value);
         }
+        if(!reports.current||!reports.daily)throw new Error('The summary or daily report is unavailable. '+Object.values(reports.failures||{}).slice(0,1).join(' '));
         maps=maps||await mapPromise;
         if(removed||version!==revision||!getSession())return;
         if(!state.day&&!state.city||!parent)parent=reports;
         detail=reports;loadedAt=new Date();updateCountries();draw();
-        status.textContent=`Updated ${loadedAt.toLocaleTimeString([], {hour:'2-digit',minute:'2-digit'})} · Recent data can change as Google processes events.`;
+        status.textContent=Object.keys(reports.failures||{}).length?`Loaded ${Object.keys(reports).length} reports. Unavailable: ${Object.keys(reports.failures).join(', ')}. Refresh to retry.`:`Updated ${loadedAt.toLocaleTimeString([], {hour:'2-digit',minute:'2-digit'})} · Recent data can change as Google processes events.`;
       } catch(error) {
-        if(removed||version!==revision||error.name==='AbortError')return;
+        if(removed||version!==revision||signal.aborted)return;
         if(detail){status.textContent='Overview loaded. Some additional reports did not respond; refresh to retry.';return;}
         parent=detail=null;
+        const overviewPanel=find('[data-panel="overview"]');if(overviewPanel)overviewPanel.innerHTML='<p class="ov-empty">Summary reports are temporarily unavailable. Choose another reporting period or open Visits for city, time and page-by-page records from the daily export.</p>';
+        const contentPanel=find('[data-panel="content"]');if(contentPanel)contentPanel.innerHTML='<p class="ov-empty">Content reports are temporarily unavailable. Page-by-page records remain accessible in Visits.</p>';
         status.textContent=error.name==='TimeoutError'?'Google took too long to respond. Please refresh to retry.':error.message;
         connect.hidden=!error.connect;
       } finally {if(!removed&&version===revision){refresh.disabled=false;root.removeAttribute('aria-busy');}}
@@ -381,7 +397,7 @@
     root.addEventListener('click',e=> {
       const tab=e.target.closest('[data-ov-tab],[data-kpi-tab]');if(tab){if(tab.dataset.kpiTab){state.visitKind=tab.dataset.kind||'';visits?.setKind(state.visitKind);}activate(tab.dataset.ovTab||tab.dataset.kpiTab);return;}
       const collapse=e.target.closest('[data-map-collapse]');if(collapse){const open=collapse.getAttribute('aria-expanded')!=='true';collapse.setAttribute('aria-expanded',String(open));collapse.textContent=open?'Hide map':'Show map';collapse.closest('.ov-map-shell').classList.toggle('is-open',open);return;}
-      const mv=e.target.closest('[data-map-view]');if(mv){state.mapView=mv.dataset.mapView;find('[data-geography]').innerHTML=geography(rows(detail.locations),maps,state);return;}
+      const mv=e.target.closest('[data-map-view]');if(mv){state.mapView=mv.dataset.mapView;find('[data-geography]').innerHTML=geography((detail.locations?rows(detail.locations):[]),maps,state);return;}
       const city=e.target.closest('[data-city]');if(city){state.highlightCity='';state.city=city.dataset.city;state.tab='visits';load({focusOnly:true});return;}
       if(e.target.closest('[data-clear-city]')){state.city=state.highlightCity='';load({focusOnly:true});return;}
       const day=e.target.closest('[data-day]');
@@ -393,6 +409,7 @@
       const hour=e.target.closest('[data-hour]');if(hour)find('[data-hour-detail]').textContent=hour.dataset.hour;
       if(e.target.closest('[data-ov-export]')&&parent&&detail) {
         const type=find('[data-ov-export-type]').value, range=focusRange(period,state.day);
+        if(!(type==='daily'?parent.daily:detail[type])){status.textContent='This report is unavailable. Please refresh before exporting.';return;}
         const data=exportRows(type,parent,detail,range,timezone).map(row=>({...row,period_start:type==='daily'?period.start:range.start,period_end:type==='daily'?period.end:range.end}));
         if(!data.length){status.textContent='There are no rows to export for this selection.';return;}
         const url=URL.createObjectURL(new Blob([csv(data)],{type:'text/csv;charset=utf-8'})), link=document.createElement('a');link.href=url;link.download=`CMBL-${type}-${type==='daily'?period.start:range.start}-${type==='daily'?period.end:range.end}.csv`;link.click();setTimeout(()=>URL.revokeObjectURL(url),1000);
@@ -403,10 +420,10 @@
     root.addEventListener('mouseover',e=>{const point=e.target.closest('[data-map-label]');if(point)point.closest('.ov-map').querySelector('[data-map-detail]').textContent=point.dataset.mapLabel;});
     root.addEventListener('change',e=>{if(e.target.matches('[data-ov-metric]')){state.metric=e.target.value;find('[data-daily-chart]').innerHTML=calendar(dailySeries(parent.daily,period),period,state.day,state.metric);}if(e.target.matches('[data-ov-page-sort]')){state.pageSort=e.target.value;draw();}});
     root.addEventListener('input',e=> {
-      if(e.target.matches('[data-ov-city-search]')){find('[data-ov-city-pages]').innerHTML=cityPagesTable(rows(detail.cityPages),e.target.value);return;}
+      if(e.target.matches('[data-ov-city-search]')){find('[data-ov-city-pages]').innerHTML=cityPagesTable(detail.cityPages?rows(detail.cityPages):[],e.target.value);return;}
       if(!e.target.matches('[data-ov-search],[data-ov-location-search]'))return;
-      if(e.target.matches('[data-ov-location-search]')){state.locationSearch=e.target.value;find('[data-city-list]').innerHTML=cityList(rows(detail.locations),state);}
-      else {state.search=e.target.value;find('[data-content-pages]').innerHTML=pageTable(rows(detail.pages),state.search);}
+      if(e.target.matches('[data-ov-location-search]')){state.locationSearch=e.target.value;find('[data-city-list]').innerHTML=cityList((detail.locations?rows(detail.locations):[]),state);}
+      else {state.search=e.target.value;find('[data-content-pages]').innerHTML=pageTable(detail.pages?rows(detail.pages):[],state.search);}
 
     });
     load();

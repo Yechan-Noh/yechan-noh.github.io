@@ -129,7 +129,7 @@
         data=result.visits;loaded=true;draw();const insight=journeySummary(data);find('[data-visit-insights]').innerHTML=`<div class="ov-journey"><div><strong>${insight.continued} / ${insight.research}</strong><span>Research visits continued to Publications</span></div><div><strong>${insight.returning}</strong><span>Returning-browser sessions</span></div><div><strong>${insight.scholar}</strong><span>Google Scholar sessions</span></div></div><p class="ov-help">Within the loaded exports${result.limited?' (latest 500 only)':''}. Missing earlier exports can limit these counts.</p>`;
         status.textContent=`${data.length} exported ${data.length===1?'visit':'visits'}${result.limited?' · Latest 500 shown; narrow the dates for the rest':''}. ${data.length?'Latest recorded visit: '+new Date(Math.max(...data.map(v=>v.first_ms))).toLocaleString('en-US',{timeZone:timezone}):'No visits in the exported selection.'}`;
         onSummary?.({returning:data.filter(v=>v.returning).length,research:data.filter(v=>(v.pages||[]).some(p=>/^\/(research|publications)(\/|$)/.test(canonical(p.path)))).length,limited:result.limited});
-      } catch(e) {if(disposed||e.name==='AbortError')return;list.replaceChildren();status.textContent=e.message;if(e.connect){needsPermission=true;button.textContent='Renew read-only access';}}
+      } catch(e) {if(disposed||controller.signal.aborted)return;list.replaceChildren();status.textContent=e.name==='TimeoutError'?'Visit records took too long to respond. Use Load visit records to retry.':e.message;if(e.connect){needsPermission=true;button.textContent='Renew read-only access';}}
       finally{if(!disposed)button.disabled=false;}
     }
     button.addEventListener('click',()=>needsPermission?onRenew():load(true));
