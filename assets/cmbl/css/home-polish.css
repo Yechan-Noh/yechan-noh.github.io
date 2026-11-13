@@ -84,3 +84,38 @@
  .home-page .hero-title h1{font-size:clamp(48px,10.8vw,70px)}
  .home-page .hero-signature{top:125px;right:6%}
 }
+
+/* Compact phone composition; preserve the approved desktop artwork scale. */
+@media(max-width:650px){
+ .home-page .opening{padding-top:112px;padding-bottom:20px}
+ .home-page .hero-title{top:18px}
+ .home-page .hero-title h1{margin-top:0;font-size:clamp(43px,11.8vw,66px);line-height:1.02;letter-spacing:-1.8px}
+ .home-page .hero-signature{top:112px;right:6%;width:132px;opacity:.9}
+ .home-page .hero-signature #titleCanvas{width:132px;height:62px}
+ .home-page .hero-signature .animation-toggle{width:44px;height:44px;right:-7px;bottom:-26px}
+ .home-page .home-research{padding:20px 0 30px}
+ .home-page .home-research .section-top{display:grid;grid-template-columns:1fr auto;gap:8px 14px;margin-bottom:18px;align-items:center}
+ .home-page .home-research .section-top h2{grid-column:1;grid-row:1;font-size:28px}
+ .home-page .home-research .topic-controls{grid-column:2;grid-row:1;gap:6px}
+ .home-page .home-research .topic-controls button{width:44px;height:44px}
+ .home-page .home-research .plain-link{grid-column:1/-1;grid-row:2;justify-self:start;font-size:13px;padding:6px 0 9px}
+ .home-page .home-research .plain-link span{padding-left:18px}
+ .home-page .home-refresh .home-research .topic-track{grid-auto-columns:calc(100% - 32px);gap:14px}
+ .home-page .home-refresh .home-research .topic-preview{padding:16px 16px 20px}
+ .home-page .home-refresh .home-research .topic-image{height:185px;margin-bottom:15px;padding-bottom:15px}
+ .home-page .home-refresh .home-research .topic-preview h3{font-size:19px}
+ .home-page .home-information{padding-top:28px;gap:28px}
+ .home-page .home-information .person-grid{grid-template-columns:108px minmax(0,1fr);column-gap:18px;row-gap:9px}
+ .home-page .home-information .person-grid>img{width:108px;height:137px}
+ .home-page .home-information .person-grid h2{font-size:25px}
+ .home-page .home-information .person-grid .eyebrow{font-size:9px;letter-spacing:.7px}
+ .home-page .home-information .person-grid .text-link{min-height:44px;display:inline-flex;align-items:center;font-size:13px}
+ .home-page .home-information .news-section{padding-top:24px}
+ .home-page .home-information .section-heading{display:flex;flex-direction:row;align-items:center;justify-content:space-between;gap:14px;margin-bottom:10px;text-align:left}
+ .home-page .home-information .section-heading h2{font-size:27px}
+ .home-page .home-information .section-heading .text-link{margin:0;min-height:44px;display:inline-flex;align-items:center}
+ .home-page .home-information .news-row{grid-template-columns:minmax(0,1fr) 14px;gap:7px 12px;padding:18px 0}
+ .home-page .home-information .news-row time{grid-column:1;grid-row:1;font-size:12px}
+ .home-page .home-information .news-row h3{grid-column:1;grid-row:2;font-size:16px;line-height:1.45}
+ .home-page .home-information .news-row>span{grid-column:2;grid-row:1/3;align-self:center}
+}

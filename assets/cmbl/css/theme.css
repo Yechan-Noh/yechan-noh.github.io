@@ -153,3 +153,10 @@ body{background:#fff;color:var(--ink)}
  .masthead nav a{display:flex;align-items:center;justify-content:center;min-height:40px;padding:7px 0}
  .masthead .brand span{font-size:13px}
 }
+
+/* Comfortable touch targets on the shared phone navigation. */
+@media(max-width:650px){
+ .masthead{width:88%;margin-inline:auto;row-gap:10px;padding:14px 0 9px}
+ .masthead nav a{min-height:44px}
+ .masthead .brand{font-size:30px}
+}
