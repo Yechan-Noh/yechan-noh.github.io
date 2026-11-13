@@ -110,3 +110,20 @@ test('overview can render before the optional hourly request finishes',async()=>
  }),/Hourly request stalled/);
  assert.equal(shown,true);
 });
+test('deferred content has identical markup when opened, without creating hidden hourly cells',()=>{
+ const period=api.periodFor('90','2026-11-12');
+ const reports=Object.fromEntries(Object.entries(api.requests(period)).map(([key,q])=>[key,report(q.dimensions.map(d=>d.name),q.metrics.map(m=>m.name),[])]));
+ const state={tab:'overview',weekOffset:0};
+ const full=api.render(reports,reports,period,state,null,'America/Denver');
+ const light=api.render(reports,reports,period,state,null,'America/Denver',true);
+ assert.equal((full.match(/class="ov-heat-cell"/g)||[]).length,2160);
+ assert.equal((light.match(/class="ov-heat-cell"/g)||[]).length,0);
+ assert.equal(light.replace('<div data-panel="content" hidden></div>',`<div data-panel="content" hidden>${api.renderContent(reports,period)}</div>`),full);
+});
+test('parsed response reuse preserves numeric results and does not cache invalid reports',()=>{
+ const r=report(['city'],['sessions'],[['Example City',3]]);
+ assert.deepEqual(api.rows(r),[{city:'Example City',sessions:3}]);
+ assert.strictEqual(api.rows(r),api.rows(r));
+ const bad=report([],['sessions'],[['invalid']]);
+ assert.throws(()=>api.rows(bad));assert.throws(()=>api.rows(bad));
+});

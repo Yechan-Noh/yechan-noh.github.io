@@ -138,7 +138,7 @@
     find('[data-visit-clear]').addEventListener('click',()=>{view.city=view.kind=view.browser=view.search='';find('[data-visit-search]').value='';onClearCity?.();draw();});
     list.addEventListener('click',e=>{const b=e.target.closest('[data-visit-browser]');if(b){view.browser=b.dataset.visitBrowser;draw();}});
     list.addEventListener('toggle',e=>{if(e.target.open){const v=data.find(v=>v.id===e.target.dataset.session);if(v)onSelectCity?.(JSON.stringify([v.location.country,v.location.region,v.location.city]));}},true);
-    return {load:()=>loaded?draw():attempted?undefined:load(),setCity(city){view.city=city;draw();},setKind(kind){view.kind=kind;draw();},dispose(){disposed=true;controller.abort();data=[];root.replaceChildren();}};
+    return {load:()=>loaded||attempted?undefined:load(),setCity(city){view.city=city;draw();},setKind(kind){view.kind=kind;draw();},dispose(){disposed=true;controller.abort();data=[];root.replaceChildren();}};
   }
   const api={mount,clear,canonical,pageName};
   if(typeof window!=='undefined')window.MTSGVisits=api;

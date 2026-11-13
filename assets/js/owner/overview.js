@@ -60,9 +60,12 @@
     const start = day || period.start, end = day || period.end;
     return {...period, start, end, comparisonStart:addDays(start, -period.shift), comparisonEnd:addDays(end, -period.shift)};
   }
+  // Reports are immutable response snapshots; release parsed rows with their report.
+  const parsedRows = new WeakMap();
   function rows(report) {
     if (!report || !Array.isArray(report.metricHeaders)) throw new Error('The analytics response is incomplete.');
-    return (report.rows || []).map(row => {
+    if (parsedRows.has(report)) return parsedRows.get(report);
+    const parsed = (report.rows || []).map(row => {
       const value = {};
       (report.dimensionHeaders || []).forEach((header,i) => value[header.name] = row.dimensionValues?.[i]?.value ?? '');
       report.metricHeaders.forEach((header,i) => {
@@ -72,6 +75,8 @@
       });
       return value;
     });
+    parsedRows.set(report, parsed);
+    return parsed;
   }
   const match = (fieldName, value, matchType = 'EXACT') => ({filter:{fieldName, stringFilter:{matchType, value, caseSensitive:false}}});
   function request(range, dimensions, metrics, filters = {}, options = {}) {
@@ -205,7 +210,15 @@
     return `<div class="ov-map-shell"><div class="ov-card-title"><div><p class="ov-eyebrow">Geography</p><h2>Where visits begin</h2></div><div class="ov-segments">${['us','world'].map(v=>`<button type="button" data-map-view="${v}" aria-pressed="${v===view}">${v==='us'?'United States':'World'}</button>`).join('')}</div></div><button type="button" data-map-collapse aria-expanded="false" class="ov-map-mobile">Show map</button><div class="ov-map">${shape?`<svg viewBox="0 0 ${shape.width} ${shape.height}" role="group" aria-label="City locations"><path d="${shape.path}" fill="#e5ecee" stroke="#fff" stroke-width=".65"/>${points}</svg>`:'<p class="ov-empty">Loading map. City records are listed alongside.</p>'}<p data-map-detail aria-live="polite">Approximate city centers · ${mapped} mapped locations${locations.length>mapped?' · Other locations remain in the list':''}</p></div></div>`;
   }
   function cityList(data,state) {return `<div class="ov-location-list">${data.filter(r=>`${r.city} ${r.region} ${r.country}`.toLowerCase().includes((state.locationSearch||'').toLowerCase())).slice(0,100).map(r=>`<button type="button" data-city="${esc(JSON.stringify([r.country,r.region,r.city]))}" aria-pressed="${state.city===JSON.stringify([r.country,r.region,r.city])}"><span><strong>${esc(r.city==='(not set)'?'City unavailable':r.city)}</strong><small>${esc(r.region)} · ${esc(r.country)}</small></span><span><b>${number(r.sessions)}</b><small>${duration(r.userEngagementDuration)} active</small></span></button>`).join('')||'<p class="ov-empty">No matching locations.</p>'}</div>`;}
-  function render(parent,detail,period,state,maps,timezone) {
+  function renderContent(detail,range) {
+    const parsed=Object.fromEntries(['pages','links','events','hours'].filter(k=>detail[k]).map(k=>[k,rows(detail[k])]));
+    const {pages=[],links=[],events=[],hours=[]}=parsed;
+    const paperLinks=links.filter(r=>paperLink(r.linkUrl));
+    return `<div class="ov-explore"><section class="ov-card"><p class="ov-eyebrow">Content performance</p><h2>Pages and active time</h2><label class="ov-inline-search">Find page<input data-ov-search placeholder="Research, publications…"></label><div data-content-pages>${pageTable(pages)}</div><p class="ov-help">Old and new addresses are combined. Active time is foreground engagement, not measured reading time.</p></section><section class="ov-card"><p class="ov-eyebrow">Next steps</p><h2>Paper links selected</h2>${table(['Destination','Clicks'],paperLinks.map(r=>[esc(r.linkUrl),number(r.eventCount)]),'No paper-link clicks were reported for these dates. Unrecorded clicks cannot be recovered.')}</section></div>
+    <section class="ov-card ov-actions"><p class="ov-eyebrow">Research selections</p><h2>Topics, CV and contact</h2><p class="ov-help">Dedicated measurement begins November 6, 2026. Earlier dates were not measured with these events.</p>${!parsed.events?'<p class="ov-empty">Action report is unavailable. Other reports are unaffected.</p>':table(['Recorded action','Count'],events.filter(r=>/^research_(topic|paper|cv|email)$/.test(r.eventName)).map(r=>[esc(r.eventName.replace('research_','')),number(r.eventCount)]),'No dedicated selections recorded yet. This is not evidence that earlier visitors took no action.')}</section>
+    <section class="ov-card"><p class="ov-eyebrow">Timing</p><h2>Activity by hour</h2>${parsed.hours?heatmap(hours,range):'<p class="ov-empty">Hourly report is unavailable. Other reports are unaffected.</p>'}</section>`;
+  }
+  function render(parent,detail,period,state,maps,timezone,deferContent=false) {
     const parsed=Object.fromEntries(Object.entries(detail).map(([k,r])=>[k,rows(r)]));
     const {pages=[],sources=[],locations=[],cityPages=[],hours=[],events=[],links=[]}=parsed;
     const c=parsed.current?.[0]||emptyTotals(),p=parsed.previous?.[0]||emptyTotals(),range=focusRange(period,state.day),daily=dailySeries(parent.daily,period);
@@ -220,9 +233,7 @@
     <section class="ov-card ov-city-pages"><div class="ov-card-title"><div><p class="ov-eyebrow">Available aggregate data</p><h2>Pages viewed by city</h2><p class="ov-help">Daily totals, including historical records. These rows are not individual visits.</p></div><label>Find city<input data-ov-city-search placeholder="City…"></label></div><div data-ov-city-pages>${cityPagesTable(cityPages)}</div></section>
     <div class="ov-explore"><section class="ov-card"><p class="ov-eyebrow">Content</p><h2>Pages receiving attention</h2><div data-ov-pages>${pageTable(pages)}</div></section><section class="ov-card"><p class="ov-eyebrow">Discovery</p><h2>How visitors find you</h2>${bars(sources.slice(0,6),'sessionSourceMedium','sessions',c.sessions)}</section></div></div>
     <div data-panel="visits" hidden><section class="ov-card ov-visits" data-ov-visits></section></div>
-    <div data-panel="content" hidden><div class="ov-explore"><section class="ov-card"><p class="ov-eyebrow">Content performance</p><h2>Pages and active time</h2><label class="ov-inline-search">Find page<input data-ov-search placeholder="Research, publications…"></label><div data-content-pages>${pageTable(pages)}</div><p class="ov-help">Old and new addresses are combined. Active time is foreground engagement, not measured reading time.</p></section><section class="ov-card"><p class="ov-eyebrow">Next steps</p><h2>Paper links selected</h2>${table(['Destination','Clicks'],paperLinks.map(r=>[esc(r.linkUrl),number(r.eventCount)]),'No paper-link clicks were reported for these dates. Unrecorded clicks cannot be recovered.')}</section></div>
-    <section class="ov-card ov-actions"><p class="ov-eyebrow">Research selections</p><h2>Topics, CV and contact</h2><p class="ov-help">Dedicated measurement begins November 6, 2026. Earlier dates were not measured with these events.</p>${!parsed.events?'<p class="ov-empty">Action report is unavailable. Other reports are unaffected.</p>':table(['Recorded action','Count'],events.filter(r=>/^research_(topic|paper|cv|email)$/.test(r.eventName)).map(r=>[esc(r.eventName.replace('research_','')),number(r.eventCount)]),'No dedicated selections recorded yet. This is not evidence that earlier visitors took no action.')}</section>
-    <section class="ov-card"><p class="ov-eyebrow">Timing</p><h2>Activity by hour</h2>${parsed.hours?heatmap(hours,range):'<p class="ov-empty">Hourly report is unavailable. Other reports are unaffected.</p>'}</section></div>
+    <div data-panel="content" hidden>${deferContent?'':renderContent(detail,range)}</div>
     <section class="ov-export"><div><h2>Export this selection</h2><p>Only loaded report rows. Individual visits remain private in this browser.</p></div><div><select data-ov-export-type aria-label="Export report"><option value="daily">Daily summary</option><option value="locations">Locations</option><option value="cityPages">City and pages</option><option value="pages">Pages</option><option value="sources">Traffic sources</option></select><button type="button" data-ov-export>Download CSV</button></div></section>`;
   }
   function csv(data) {
@@ -276,18 +287,25 @@
     const ownerStatus=window.MTSGAnalytics?.status();
     find('[data-ov-owner-status]').textContent=ownerStatus?.persisted ? 'Your visits from this browser are excluded from now on, even after closing this overview. Historical data is unchanged.' : 'Owner exclusion is active for this page. Allow site storage to keep this browser excluded on future visits.';
     const state={weekOffset:0,day:null,metric:'sessions',country:'',device:'',pageSort:'views',search:'',locationSearch:'',tab:'overview',mapView:'us',city:'',visitKind:''};
-    let visits,controller,revision=0,removed=false,timezone,parent,detail,period,maps,loadedAt;
+    let contentReady=false,visits,controller,revision=0,removed=false,timezone,parent,detail,period,maps,loadedAt;
     const cache=new Map();
     const mapPromise=fetch(BASE+'/assets/js/owner/city-map.json',{credentials:'omit',signal:AbortSignal.timeout(6000)}).then(r=>r.ok?r.json():null).then(cities=>({cities})).catch(()=>null);
     const clearData=()=> {parent=detail=null;cache.clear();content.replaceChildren();content.hidden=true;};
     function activate(tab) {
       state.tab=tab;root.querySelectorAll('[data-panel]').forEach(el=>el.hidden=el.dataset.panel!==tab);
       root.querySelectorAll('[data-ov-tab]').forEach(el=>el.setAttribute('aria-pressed',el.dataset.ovTab===tab));
-      if(tab==='visits') visits?.load();
+      if(tab==='content'&&detail&&!contentReady){
+        find('[data-panel="content"]').innerHTML=renderContent(detail,focusRange(period,state.day));
+        contentReady=true;
+      }
+      if(tab==='visits') {
+        if(!visits&&detail)visits=window.MTSGVisits?.mount({root:find('[data-ov-visits]'),range:focusRange(period,state.day),filters:{country:state.country,device:state.device},timezone,getSession,onRenew,initialCity:state.city,initialKind:state.visitKind,onClearCity:()=>{state.city='';load({focusOnly:true});},onSelectCity:city=>{state.highlightCity=city;find('[data-geography]').innerHTML=geography(rows(detail.locations),maps,state);}});
+        visits?.load();
+      }
     }
     function draw() {if(parent&&detail&&!removed){
-      visits?.dispose();content.innerHTML=render(parent,detail,period,state,maps,timezone);content.hidden=false;
-      visits=window.MTSGVisits?.mount({root:find('[data-ov-visits]'),range:focusRange(period,state.day),filters:{country:state.country,device:state.device},timezone,getSession,onRenew,initialCity:state.city,initialKind:state.visitKind,onClearCity:()=>{state.city='';load({focusOnly:true});},onSelectCity:city=>{state.highlightCity=city;find('[data-geography]').innerHTML=geography(rows(detail.locations),maps,state);}});
+      visits?.dispose();visits=null;contentReady=false;
+      content.innerHTML=render(parent,detail,period,state,maps,timezone,true);content.hidden=false;
       activate(state.tab);
     }}
     function updateCountries() {
@@ -300,7 +318,7 @@
       controller?.abort();controller=new AbortController();
       const signal=AbortSignal.any([controller.signal,AbortSignal.timeout(45000)]);
       connect.hidden=true;refresh.disabled=true;root.setAttribute('aria-busy','true');
-      visits?.dispose();visits=null;content.hidden=true;content.replaceChildren();status.textContent='Loading your Google Analytics data…';
+      visits?.dispose();visits=null;detail=null;contentReady=false;content.hidden=true;content.replaceChildren();status.textContent='Loading your Google Analytics data…';
       const session=getSession();
       if(!session){clearData();status.textContent='Renew your Google sign-in to load the report.';connect.hidden=false;refresh.disabled=false;root.removeAttribute('aria-busy');return;}
       try {
@@ -330,7 +348,7 @@
             if(removed||version!==revision)return;
             status.textContent=`Loading reports ${done} of ${total}…`;
             // Show the complete overview before optional timing/action reports.
-            if(done===13){parent=partial;detail=partial;updateCountries();draw();}
+            if(partial.devices&&!detail){if(!state.day&&!state.city||!parent)parent=partial;detail=partial;updateCountries();draw();}
           }});
           if(removed||version!==revision||!getSession())return;
           cache.set(key,{time:Date.now(),reports});
@@ -396,5 +414,5 @@
   }
   const api={mount};
   if(typeof window!=='undefined')window.MTSGOverview=api;
-  if(typeof module!=='undefined')module.exports={...api,cityPagesTable,mergePages,pageName,paperLink,geography,filterRequest:request,esc,number,duration,ratio,delta,rows,request,requests,todayInZone,periodFor,focusRange,dailySeries,calendar,heatmap,render,mapGraphic,csv,exportRows,normalizeReport,fetchReports};
+  if(typeof module!=='undefined')module.exports={...api,cityPagesTable,mergePages,pageName,paperLink,geography,filterRequest:request,esc,number,duration,ratio,delta,rows,request,requests,todayInZone,periodFor,focusRange,dailySeries,calendar,heatmap,render,renderContent,mapGraphic,csv,exportRows,normalizeReport,fetchReports};
 })();
