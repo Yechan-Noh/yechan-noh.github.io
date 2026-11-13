@@ -45,9 +45,11 @@
             this.density = Math.random() * 25 + 5;
             this.vx = this.vy = 0;
             this.hue = 190 + Math.random() * 15;
+            this.fillColor = `hsla(${this.hue},18%,40%,.95)`;
+            this.lineColor = `hsl(${this.hue},18%,40%)`;
         }
         draw() {
-            ctx.fillStyle = `hsla(${this.hue},18%,40%,.95)`;
+            ctx.fillStyle = this.fillColor;
             ctx.beginPath();
             ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
             ctx.fill();
@@ -57,8 +59,9 @@
             if (mouse.x !== null) {
                 let dx = this.x - mouse.x,
                     dy = this.y - mouse.y,
-                    d = Math.hypot(dx, dy);
-                if (d < mouse.radius && d > 0.0001) {       // avoid divide-by-0
+                    d2 = dx * dx + dy * dy;
+                if (d2 < mouse.radius * mouse.radius && d2 > 1e-8) {       // avoid divide-by-0
+                    const d = Math.sqrt(d2);
                     const f = (mouse.radius - d) / mouse.radius;
                     this.vx += (dx / d) * f * 2;
                     this.vy += (dy / d) * f * 2;
@@ -68,8 +71,9 @@
             {
                 let dx = this.x - autoCircle.x,
                     dy = this.y - autoCircle.y,
-                    d = Math.hypot(dx, dy);
-                if (d < autoCircle.radius && d > 0.0001) {
+                    d2 = dx * dx + dy * dy;
+                if (d2 < autoCircle.radius * autoCircle.radius && d2 > 1e-8) {
+                    const d = Math.sqrt(d2);
                     const f = (autoCircle.radius - d) / autoCircle.radius;
                     this.vx += (dx / d) * f * 2;
                     this.vy += (dy / d) * f * 2;
@@ -120,26 +124,37 @@
     }
 
     /* ─── Thin particle connections ─────────────────────────────────── */
+    // Reuse numeric buckets instead of constructing string keys, maps and arrays per frame.
+    const columns = new Map();
+    const buckets = [];
     function connect() {
-        // Compare nearby particles only so denser lettering stays responsive.
-        const cells = new Map();
+        for (const bucket of buckets) bucket.length = 0;
+        ctx.lineWidth = 0.85;
         for (const p of particles) {
             const cx = Math.floor(p.x / 15), cy = Math.floor(p.y / 15);
+            ctx.strokeStyle = p.lineColor;
             for (let x = cx - 1; x <= cx + 1; x++) {
+                const column = columns.get(x);
+                if (!column) continue;
                 for (let y = cy - 1; y <= cy + 1; y++) {
-                    for (const q of cells.get(`${x},${y}`) || []) {
-                        const d = Math.hypot(p.x - q.x, p.y - q.y);
-                        if (d >= 15) continue;
-                        ctx.strokeStyle = `hsla(${p.hue},18%,40%,${0.4 - 0.4 * d / 15})`;
-                        ctx.lineWidth = 0.85;
+                    const bucket = column.get(y);
+                    if (!bucket) continue;
+                    for (const q of bucket) {
+                        const dx = p.x - q.x, dy = p.y - q.y;
+                        const d2 = dx * dx + dy * dy;
+                        if (d2 >= 225) continue;
+                        ctx.globalAlpha = 0.4 - 0.4 * Math.sqrt(d2) / 15;
                         ctx.beginPath(); ctx.moveTo(p.x, p.y); ctx.lineTo(q.x, q.y); ctx.stroke();
                     }
                 }
             }
-            const key = `${cx},${cy}`;
-            if (!cells.has(key)) cells.set(key, []);
-            cells.get(key).push(p);
+            let column = columns.get(cx);
+            if (!column) columns.set(cx, column = new Map());
+            let bucket = column.get(cy);
+            if (!bucket) { column.set(cy, bucket = []); buckets.push(bucket); }
+            bucket.push(p);
         }
+        ctx.globalAlpha = 1;
     }
 
     /* ─── Main animation loop ───────────────────────────────────────── */
@@ -155,7 +170,7 @@
         for (const p of particles) { p.update(); p.draw(); }
         connect();
 
-        canvas.dataset.frame = String(++frame);
+        if (++frame % 30 === 0) canvas.dataset.frame = String(frame);
         if (!paused && inView && !document.hidden) animationFrame = requestAnimationFrame(animate);
     }
 
@@ -163,15 +178,19 @@
     function resize() {
         // Keep desktop-density lettering on phones, then render at native pixel density.
         const width = canvas.clientWidth, height = canvas.clientHeight;
+        const dpr = Math.max(3, window.devicePixelRatio || 1);
+        if (canvas.width === Math.round(width * dpr) && canvas.height === Math.round(height * dpr) && particles.length) return;
         sceneScale = Math.min(1, width / 320);
         viewWidth = width / sceneScale;
         viewHeight = height / sceneScale;
-        const dpr = Math.max(3, window.devicePixelRatio || 1);
         canvas.width = Math.round(width * dpr);
         canvas.height = Math.round(height * dpr);
         ctx.setTransform(dpr * sceneScale, 0, 0, dpr * sceneScale, 0, 0);
         autoCircle.y = viewHeight * 0.46;
         initParticles();
+        columns.clear(); buckets.length = 0;
+        for (const p of particles) p.draw();
+        connect();
     }
 
     window.addEventListener('resize', resize);
