@@ -122,11 +122,11 @@
 
 /* Laptop opening: fit the full wide artwork below the masthead. */
 @media(min-width:651px){
- .home-page .opening{--hero-width:min(100%,1600px,calc((100svh - 160px)*2));padding:20px 0}
+ .home-page .opening{--hero-width:min(100%,1600px,calc((100svh - 160px)*2));padding:20px 0 220px;background:linear-gradient(to right,#fff,transparent) left / max(0px,calc((100% - 1600px)/2)) 100% no-repeat,linear-gradient(to left,#fff,transparent) right / max(0px,calc((100% - 1600px)/2)) 100% no-repeat,linear-gradient(to bottom,#fff,#f0eae4 90px,#f0eae4 calc(100% - 140px),#fff)}
  .home-page .scene{width:var(--hero-width);aspect-ratio:2}
  .home-page .scene img{left:0;width:100%;-webkit-mask-image:linear-gradient(to right,transparent,#000 15%,#000 91%,transparent),linear-gradient(to bottom,transparent,#000 8%,#000 92%,transparent);mask-image:linear-gradient(to right,transparent,#000 15%,#000 91%,transparent),linear-gradient(to bottom,transparent,#000 8%,#000 92%,transparent)}
- .home-page .hero-title{top:42px;left:calc((100% - var(--hero-width))/2 + var(--hero-width)*.18)}
- .home-page .hero-title h1{margin-top:0;font-size:min(96px,6.2vw,12svh);letter-spacing:-3px;line-height:.98}
+ .home-page .hero-title{top:42px;left:max(4.5%,calc((100% - 1280px)/2))}
+ .home-page .hero-title h1{margin-top:0;font-size:min(84px,5.5vw,10.5svh);letter-spacing:-3px;line-height:.98}
  .home-page .hero-signature{top:38px;right:calc((100% - var(--hero-width))/2 + var(--hero-width)*.08)}
 }
 @media(min-width:651px) and (max-width:1200px){
