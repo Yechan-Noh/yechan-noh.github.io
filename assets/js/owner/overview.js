@@ -201,15 +201,26 @@
   }
   const paperLink=url=>/^https?:\/\/(?:[^/]+\.)?(doi\.org|biorxiv\.org|arxiv\.org|pubs\.acs\.org|journals\.aps\.org|science\.org|onlinelibrary\.wiley\.com|nature\.com|sciencedirect\.com)(\/|$)/i.test(url||'')||/\/files\/.*\.pdf(?:[?#]|$)/i.test(url||'')&&!/cv|resume/i.test(url);
   function pageTable(data,search='') {return table(['Page','Views','Active time'],mergePages(data).filter(r=>pageName(r.pagePath).toLowerCase().includes(search.toLowerCase())).map(r=>[`<strong>${esc(pageName(r.pagePath))}</strong><small class="ov-cell-sub">${esc(r.pagePath)}</small>`,number(r.screenPageViews),duration(r.userEngagementDuration)]));}
-  function geography(locations,maps,state) {
+  function locationData(reports) {
+    if(reports?.locations)return {data:rows(reports.locations),metric:'sessions',label:'visits'};
+    if(!reports?.cityPages)return {data:[],metric:'screenPageViews',label:'page views',unavailable:true};
+    const grouped=new Map();
+    for(const r of rows(reports.cityPages)){
+      const key=JSON.stringify([r.country,r.region,r.city]);
+      if(!grouped.has(key))grouped.set(key,{country:r.country,region:r.region,city:r.city,screenPageViews:0,userEngagementDuration:0});
+      const value=grouped.get(key);value.screenPageViews+=r.screenPageViews;value.userEngagementDuration+=r.userEngagementDuration;
+    }
+    return {data:[...grouped.values()].sort((a,b)=>b.screenPageViews-a.screenPageViews),metric:'screenPageViews',label:'page views'};
+  }
+  function geography(locations,maps,state,metric='sessions') {
     const geo=maps?.cities,view=state.mapView||'us', shape=geo?.[view];
     const norm=s=>String(s||'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase().replace(/[^a-z0-9]/g,'');
     const key=r=>JSON.stringify([r.country,r.region,r.city]);
-    const max=Math.max(1,...locations.map(r=>r.sessions));let mapped=0;
-    const points=locations.map(r=>{const k=[r.country,r.region,r.city].map(norm).join('|'), c=geo?.lookup?.[k]||(r.country==='South Korea'?geo?.lookup?.[k.replace(/si$/,'')]:null);if(!c||!c[view])return '';mapped++;const [x,y]=c[view];return `<circle cx="${x}" cy="${y}" r="${4+10*Math.sqrt(r.sessions/max)}" data-city="${esc(key(r))}" data-map-label="${esc(r.city)}: ${number(r.sessions)} visits" role="button" tabindex="0" aria-label="${esc(r.city)}: ${number(r.sessions)} visits" class="${(state.highlightCity||state.city)===key(r)?'selected':''}"><title>${esc(r.city)} · ${number(r.sessions)} visits</title></circle>`;}).join('');
-    return `<div class="ov-map-shell"><div class="ov-card-title"><div><p class="ov-eyebrow">Geography</p><h2>Where visits begin</h2></div><div class="ov-segments">${['us','world'].map(v=>`<button type="button" data-map-view="${v}" aria-pressed="${v===view}">${v==='us'?'United States':'World'}</button>`).join('')}</div></div><button type="button" data-map-collapse aria-expanded="false" class="ov-map-mobile">Show map</button><div class="ov-map">${shape?`<svg viewBox="0 0 ${shape.width} ${shape.height}" role="group" aria-label="City locations"><path d="${shape.path}" fill="#e5ecee" stroke="#fff" stroke-width=".65"/>${points}</svg>`:'<p class="ov-empty">Loading map. City records are listed alongside.</p>'}<p data-map-detail aria-live="polite">Approximate city centers · ${mapped} mapped locations${locations.length>mapped?' · Other locations remain in the list':''}</p></div></div>`;
+    const max=Math.max(1,...locations.map(r=>r[metric]));let mapped=0;
+    const points=locations.map(r=>{const k=[r.country,r.region,r.city].map(norm).join('|'), c=geo?.lookup?.[k]||(r.country==='South Korea'?geo?.lookup?.[k.replace(/si$/,'')]:null);if(!c||!c[view])return '';mapped++;const [x,y]=c[view];return `<circle cx="${x}" cy="${y}" r="${4+10*Math.sqrt(r[metric]/max)}" data-city="${esc(key(r))}" data-map-label="${esc(r.city)}: ${number(r[metric])} ${metric==='sessions'?'visits':'page views'}" role="button" tabindex="0" aria-label="${esc(r.city)}: ${number(r[metric])} ${metric==='sessions'?'visits':'page views'}" class="${(state.highlightCity||state.city)===key(r)?'selected':''}"><title>${esc(r.city)} · ${number(r[metric])} ${metric==='sessions'?'visits':'page views'}</title></circle>`;}).join('');
+    return `<div class="ov-map-shell"><div class="ov-card-title"><div><p class="ov-eyebrow">Geography</p><h2>${metric==='sessions'?'Where visits begin':'Where pages are viewed'}</h2></div><div class="ov-segments">${['us','world'].map(v=>`<button type="button" data-map-view="${v}" aria-pressed="${v===view}">${v==='us'?'United States':'World'}</button>`).join('')}</div></div><button type="button" data-map-collapse aria-expanded="false" class="ov-map-mobile">Show map</button><div class="ov-map">${shape?`<svg viewBox="0 0 ${shape.width} ${shape.height}" role="group" aria-label="City locations"><path d="${shape.path}" fill="#e5ecee" stroke="#fff" stroke-width=".65"/>${points}</svg>`:'<p class="ov-empty">Loading map. City records are listed alongside.</p>'}<p data-map-detail aria-live="polite">Approximate city centers · ${mapped} mapped locations${locations.length>mapped?' · Other locations remain in the list':''}</p></div></div>`;
   }
-  function cityList(data,state) {return `<div class="ov-location-list">${data.filter(r=>`${r.city} ${r.region} ${r.country}`.toLowerCase().includes((state.locationSearch||'').toLowerCase())).slice(0,100).map(r=>`<button type="button" data-city="${esc(JSON.stringify([r.country,r.region,r.city]))}" aria-pressed="${state.city===JSON.stringify([r.country,r.region,r.city])}"><span><strong>${esc(r.city==='(not set)'?'City unavailable':r.city)}</strong><small>${esc(r.region)} · ${esc(r.country)}</small></span><span><b>${number(r.sessions)}</b><small>${duration(r.userEngagementDuration)} active</small></span></button>`).join('')||'<p class="ov-empty">No matching locations.</p>'}</div>`;}
+  function cityList(data,state,metric='sessions') {return `<div class="ov-location-list">${data.filter(r=>`${r.city} ${r.region} ${r.country}`.toLowerCase().includes((state.locationSearch||'').toLowerCase())).slice(0,100).map(r=>`<button type="button" data-city="${esc(JSON.stringify([r.country,r.region,r.city]))}" aria-pressed="${state.city===JSON.stringify([r.country,r.region,r.city])}"><span><strong>${esc(r.city==='(not set)'?'City unavailable':r.city)}</strong><small>${esc(r.region)} · ${esc(r.country)}</small></span><span><b>${number(r[metric])} ${metric==='sessions'?'visits':'views'}</b><small>${duration(r.userEngagementDuration)} active</small></span></button>`).join('')||'<p class="ov-empty">No matching locations.</p>'}</div>`;}
   const unavailable=()=>'<p class="ov-empty">Report unavailable or still loading. This does not mean zero visits.</p>';
   function renderContent(detail,range) {
     const parsed=Object.fromEntries(['pages','links','events','hours'].filter(k=>detail[k]).map(k=>[k,rows(detail[k])]));
@@ -223,14 +234,14 @@
     const parsed=Object.fromEntries(Object.entries(detail).map(([k,r])=>[k,rows(r)]));
     const {pages=[],sources=[],locations=[],cityPages=[],hours=[],events=[],links=[]}=parsed;
     const c=parsed.current?.[0]||emptyTotals(),p=parsed.previous?(parsed.previous[0]||emptyTotals()):{},range=focusRange(period,state.day),daily=dailySeries(parent.daily,period);
-    const mapLocations=locations,paperLinks=links.filter(r=>paperLink(r.linkUrl));
+    const location=locationData(detail),mapLocations=location.data,paperLinks=links.filter(r=>paperLink(r.linkUrl));
     const kpis=[['Visits',c.sessions,'visits','',`${number(p.sessions)} in the comparison period`],['Returning sessions',parsed.returning?(parsed.returning[0]?.sessions||0):null,'visits','returning','GA returning-browser classification'],['Research & Publications',parsed.research?(parsed.research[0]?.sessions||0):null,'visits','research','Sessions viewing either page'],['Paper link clicks',parsed.links?paperLinks.reduce((n,r)=>n+r.eventCount,0):null,'content','','Recorded outbound paper links']];
     const notes=notices(detail);
     return `<div class="ov-focus"><div><span class="ov-focus-dot"></span><div><p class="ov-eyebrow">${state.day?'Selected day':period.label}</p><h2>${dateLabel(range.start)}${range.end===range.start?'':' – '+dateLabel(range.end)}</h2><p>${state.city?esc(JSON.parse(state.city).slice().reverse().join(', ')):state.country||'All locations'} · ${state.device||'All devices'}</p></div></div><div>${state.day?'<button type="button" data-ov-all>Full period</button>':''}${state.city?'<button type="button" data-clear-city>Clear city</button>':''}</div></div>
     <section class="ov-kpis">${kpis.map(([label,n,tab,kind,note])=>`<button type="button" data-kpi-tab="${tab}" data-kind="${kind}"><span>${label}</span><strong>${number(n)}</strong><small>${note}</small></button>`).join('')}</section><p class="ov-comparison">${number(p.sessions)} → ${number(c.sessions)} visits · Compared with ${dateLabel(range.comparisonStart)}–${dateLabel(range.comparisonEnd)}${range.end===period.today?' · Today is partial; the comparison day is complete':''}</p>
     ${notes.length?`<p class="ov-warning">${notes.map(esc).join(' ')}</p>`:''}
     <section class="ov-card ov-calendar"><div class="ov-card-title"><div><p class="ov-eyebrow">Daily activity · all cities in selected country</p><h2>${dateLabel(period.start)} – ${dateLabel(period.displayEnd)}</h2></div><div class="ov-calendar-controls">${period.mode==='week'?`<button type="button" data-ov-week="-1" aria-label="Previous week">←</button><button type="button" data-ov-week="1" aria-label="Next week" ${state.weekOffset>=0?'disabled':''}>→</button>`:''}<label>Chart<select data-ov-metric aria-label="Daily chart"><option value="sessions" ${state.metric==='sessions'?'selected':''}>Visits</option><option value="screenPageViews" ${state.metric==='screenPageViews'?'selected':''}>Page views</option><option value="userEngagementDuration" ${state.metric==='userEngagementDuration'?'selected':''}>Active time</option></select></label></div></div><div data-daily-chart>${calendar(daily,period,state.day,state.metric||'sessions')}</div></section>
-    <div data-panel="overview"><div class="ov-explore"><section class="ov-card" data-geography>${geography(mapLocations,maps,state)}</section><section class="ov-card"><div class="ov-card-title"><div><p class="ov-eyebrow">Locations</p><h2>Explore a city</h2></div><label>Find location<input data-ov-location-search value="${esc(state.locationSearch||'')}" placeholder="City or region…"></label></div><p class="ov-help">Select a city to filter this period and open its visit records.</p><div data-city-list>${detail.locations?cityList(mapLocations,state):unavailable()}</div></section></div>
+    <div data-panel="overview"><div class="ov-explore"><section class="ov-card" data-geography>${location.unavailable?unavailable():geography(mapLocations,maps,state,location.metric)}</section><section class="ov-card"><div class="ov-card-title"><div><p class="ov-eyebrow">Locations</p><h2>Explore a city</h2></div><label>Find location<input data-ov-location-search value="${esc(state.locationSearch||'')}" placeholder="City or region…"></label></div><p class="ov-help">Select a city to filter this period and open its visit records.${!detail.locations&&detail.cityPages?' Counts below are page views from the city/page report, not visits.':''}</p><div data-city-list>${location.unavailable?unavailable():cityList(mapLocations,state,location.metric)}</div></section></div>
     <section class="ov-card ov-city-pages"><div class="ov-card-title"><div><p class="ov-eyebrow">Available aggregate data</p><h2>Pages viewed by city</h2><p class="ov-help">Daily totals, including historical records. These rows are not individual visits.</p></div><label>Find city<input data-ov-city-search placeholder="City…"></label></div><div data-ov-city-pages>${detail.cityPages?cityPagesTable(cityPages):unavailable()}</div></section>
     <div class="ov-explore"><section class="ov-card"><p class="ov-eyebrow">Content</p><h2>Pages receiving attention</h2><div data-ov-pages>${detail.pages?pageTable(pages):unavailable()}</div></section><section class="ov-card"><p class="ov-eyebrow">Discovery</p><h2>How visitors find you</h2>${detail.sources?bars(sources.slice(0,6),'sessionSourceMedium','sessions',c.sessions):unavailable()}</section></div></div>
     <div data-panel="visits" hidden><section class="ov-card ov-visits" data-ov-visits></section></div>
@@ -308,7 +319,7 @@
         contentReady=true;
       }
       if(tab==='visits') {
-        if(!visits&&period)visits=window.MTSGVisits?.mount({root:find('[data-ov-visits]'),range:focusRange(period,state.day),filters:{country:state.country,device:state.device},timezone,getSession,onRenew,initialCity:state.city,initialKind:state.visitKind,onClearCity:()=>{state.city='';load({focusOnly:true});},onSelectCity:city=>{state.highlightCity=city;const geo=find('[data-geography]');if(geo&&detail)geo.innerHTML=geography((detail.locations?rows(detail.locations):[]),maps,state);}});
+        if(!visits&&period)visits=window.MTSGVisits?.mount({root:find('[data-ov-visits]'),range:focusRange(period,state.day),filters:{country:state.country,device:state.device},timezone,getSession,onRenew,initialCity:state.city,initialKind:state.visitKind,onClearCity:()=>{state.city='';load({focusOnly:true});},onSelectCity:city=>{state.highlightCity=city;const geo=find('[data-geography]');if(geo&&detail)geo.innerHTML=geography(locationData(detail).data,maps,state,locationData(detail).metric);}});
         visits?.load();
       }
     }
@@ -318,9 +329,9 @@
       activate(state.tab);
     }}
     function updateCountries() {
-      if(state.country||!parent?.countries)return;
+      if(state.country||!parent)return;
       const select=find('[data-ov-country]');
-      select.innerHTML='<option value="">All countries</option>'+rows(parent.countries).filter(r=>r.country&&r.country!=='(not set)').sort((a,b)=>a.country.localeCompare(b.country)).map(r=>`<option>${esc(r.country)}</option>`).join('');
+      select.innerHTML='<option value="">All countries</option>'+[...new Set((parent.countries?rows(parent.countries):locationData(parent).data).map(r=>r.country))].filter(country=>country&&country!=='(not set)').map(country=>({country})).sort((a,b)=>a.country.localeCompare(b.country)).map(r=>`<option>${esc(r.country)}</option>`).join('');
     }
     async function load({fresh=false,focusOnly=false}={}) {
       const version=++revision;
@@ -397,7 +408,7 @@
     root.addEventListener('click',e=> {
       const tab=e.target.closest('[data-ov-tab],[data-kpi-tab]');if(tab){if(tab.dataset.kpiTab){state.visitKind=tab.dataset.kind||'';visits?.setKind(state.visitKind);}activate(tab.dataset.ovTab||tab.dataset.kpiTab);return;}
       const collapse=e.target.closest('[data-map-collapse]');if(collapse){const open=collapse.getAttribute('aria-expanded')!=='true';collapse.setAttribute('aria-expanded',String(open));collapse.textContent=open?'Hide map':'Show map';collapse.closest('.ov-map-shell').classList.toggle('is-open',open);return;}
-      const mv=e.target.closest('[data-map-view]');if(mv){state.mapView=mv.dataset.mapView;find('[data-geography]').innerHTML=geography((detail.locations?rows(detail.locations):[]),maps,state);return;}
+      const mv=e.target.closest('[data-map-view]');if(mv){state.mapView=mv.dataset.mapView;find('[data-geography]').innerHTML=geography(locationData(detail).data,maps,state,locationData(detail).metric);return;}
       const city=e.target.closest('[data-city]');if(city){state.highlightCity='';state.city=city.dataset.city;state.tab='visits';load({focusOnly:true});return;}
       if(e.target.closest('[data-clear-city]')){state.city=state.highlightCity='';load({focusOnly:true});return;}
       const day=e.target.closest('[data-day]');
@@ -422,7 +433,7 @@
     root.addEventListener('input',e=> {
       if(e.target.matches('[data-ov-city-search]')){find('[data-ov-city-pages]').innerHTML=cityPagesTable(detail.cityPages?rows(detail.cityPages):[],e.target.value);return;}
       if(!e.target.matches('[data-ov-search],[data-ov-location-search]'))return;
-      if(e.target.matches('[data-ov-location-search]')){state.locationSearch=e.target.value;find('[data-city-list]').innerHTML=cityList((detail.locations?rows(detail.locations):[]),state);}
+      if(e.target.matches('[data-ov-location-search]')){state.locationSearch=e.target.value;find('[data-city-list]').innerHTML=cityList(locationData(detail).data,state,locationData(detail).metric);}
       else {state.search=e.target.value;find('[data-content-pages]').innerHTML=pageTable(detail.pages?rows(detail.pages):[],state.search);}
 
     });
@@ -431,5 +442,5 @@
   }
   const api={mount};
   if(typeof window!=='undefined')window.MTSGOverview=api;
-  if(typeof module!=='undefined')module.exports={...api,cityPagesTable,mergePages,pageName,paperLink,geography,filterRequest:request,esc,number,duration,ratio,delta,rows,request,requests,todayInZone,periodFor,focusRange,dailySeries,calendar,heatmap,render,renderContent,mapGraphic,csv,exportRows,normalizeReport,fetchReports};
+  if(typeof module!=='undefined')module.exports={...api,cityPagesTable,locationData,mergePages,pageName,paperLink,geography,filterRequest:request,esc,number,duration,ratio,delta,rows,request,requests,todayInZone,periodFor,focusRange,dailySeries,calendar,heatmap,render,renderContent,mapGraphic,csv,exportRows,normalizeReport,fetchReports};
 })();

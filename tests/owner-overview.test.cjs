@@ -153,3 +153,10 @@ test('partial rendering marks missing data unavailable instead of inventing zero
  assert.match(html,/Report unavailable/);assert.match(html,/— in the comparison period/);
  assert.doesNotMatch(html,/No city-level page activity reported/);
 });
+test('geography falls back to additive page views, never fabricated session totals',()=>{
+ const detail={cityPages:report(['date','country','region','city','pagePath'],['screenPageViews','userEngagementDuration'],[['20261112','US','Illinois','Chicago','/',2,20],['20261113','US','Illinois','Chicago','/research/',3,40],['20261113','US','Indiana','South Bend','/',1,5]])};
+ const fallback=api.locationData(detail);assert.equal(fallback.metric,'screenPageViews');assert.equal(fallback.data[0].screenPageViews,5);assert.equal(fallback.data[0].userEngagementDuration,60);assert.equal(fallback.data[0].sessions,undefined);
+ const html=api.geography(fallback.data,null,{},fallback.metric);assert.match(html,/Where pages are viewed/);
+ assert.equal(api.locationData({}).unavailable,true);
+ const original=report(['city'],['sessions'],[['Chicago',2]]);assert.equal(api.locationData({...detail,locations:original}).metric,'sessions');
+});
