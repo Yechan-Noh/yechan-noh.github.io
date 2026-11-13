@@ -145,3 +145,11 @@ body{background:#fff;color:var(--ink)}
 
 /* Align the shared masthead with the capped homepage composition. */
 .masthead{width:min(1280px,91%);margin-inline:auto}
+
+/* A stable three-column mobile navigation, without hiding destinations. */
+@media(max-width:650px){
+ .masthead{row-gap:12px;padding:17px 0 12px}
+ .masthead nav{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:2px 12px;width:100%;font-size:15px}
+ .masthead nav a{display:flex;align-items:center;justify-content:center;min-height:40px;padding:7px 0}
+ .masthead .brand span{font-size:13px}
+}

@@ -33,3 +33,11 @@
 .motion-mobile-hint{display:none}@media(max-width:650px){.motion-mobile-hint{display:block;margin-top:8px;color:var(--ink)}}
 /* Keep orbit marks readable on phones; the rotating front arc enters the viewport. */
 @media(max-width:650px){.journal-exhibition{overflow:hidden}.elliptical-stage{width:680px;max-width:none;min-height:0;position:relative;left:50%;transform:translateX(-50%)}}
+
+.orbit-viewport{width:100%;overflow-x:auto;overflow-y:hidden;scrollbar-width:thin;scrollbar-color:#acbbc3 transparent}
+.orbit-viewport:focus-visible{outline:2px solid #47697a;outline-offset:3px}
+@media(max-width:650px){
+ .journal-exhibition{overflow:visible;margin-inline:0}
+ .orbit-viewport .elliptical-stage{width:640px;max-width:none;left:0;transform:none}
+ .orbit-pause{font-size:12px;min-height:40px;right:0;color:#455e6c}
+}

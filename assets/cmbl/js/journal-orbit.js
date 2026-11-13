@@ -21,7 +21,8 @@
     options=document.createElement('div');options.className='orbit-options';options.setAttribute('aria-label','Orbit design comparison');
     [1,2,3,4].forEach(n=>{const b=document.createElement('button');b.type='button';b.textContent=n===4?'분야별 궤도':`${n}개 궤도`;b.dataset.orbits=n;b.onclick=()=>{mode=n;phase=0;build();const q=new URLSearchParams(location.search);q.set('orbits',n);history.replaceState(null,'',`${location.pathname}?${q}`)};options.append(b)});gallery.append(options);
   }
-  gallery.append(svg,button);gallery.classList.add('is-elliptical');
+  const viewport=document.createElement('div');viewport.className='orbit-viewport';viewport.tabIndex=0;viewport.setAttribute('role','region');viewport.setAttribute('aria-label','Rotating journal logos; scroll horizontally on smaller screens');viewport.append(svg);gallery.append(viewport,button);gallery.classList.add('is-elliptical');
+  new ResizeObserver(()=>{viewport.scrollLeft=Math.max(0,(viewport.scrollWidth-viewport.clientWidth)/2);draw();}).observe(viewport);
   function build(){
     svg.replaceChildren();logos=[];
     if(mode===4){buildFields();if(options)options.querySelectorAll('button').forEach(b=>b.setAttribute('aria-pressed',Number(b.dataset.orbits)===mode));draw();return;}
@@ -76,7 +77,7 @@
   function buildFields(){
     svg.setAttribute('viewBox','0 8 1000 232');
     const fields=[
-      {name:'Publication venues',offsetY:-12,cx:500,cy:145,rx:410,ry:41,width:132,speed:1,venues:[
+      {name:'Publication venues',offsetY:-12,cx:500,cy:145,rx:410,ry:41,width:116,speed:1,venues:[
         'Science Advances','Physical Review E','Nano Letters','The Journal of Physical Chemistry B',
         'Nature Communications','Applied Physics Letters','small','The Journal of Chemical Physics',
         'ACS Nano','Physical Review Materials','nanoscale','The Journal of Physical Chemistry Letters',
@@ -116,7 +117,11 @@
       const cx=field?field.cx:500;cy=field?field.cy:cy;
       const a=Math.PI/2+slot*2*Math.PI/n+phase*speed;
       const projected=field?projectOrbit(field,a):{x:cx+rx*Math.cos(a),y:cy+ry*Math.sin(a),depth:(Math.sin(a)+1)/2,scale:.58+.42*(Math.sin(a)+1)/2};
-      const {x,y,depth,scale}=projected,w=baseWidth*scale*emphasis,h=36*scale*emphasis;
+      const {x,y,depth,scale}=projected;
+      // The near-front view compresses spacing at either end: taper logos there.
+      const endScale=field ? .58+.42*Math.pow(Math.abs(Math.sin(a)),.6) : 1;
+      const mobileBoost=viewport.clientWidth<650 ? 1.15 : 1;
+      const w=baseWidth*scale*emphasis*endScale*mobileBoost,h=36*scale*emphasis*endScale*mobileBoost;
       Object.entries({x:x-w/2,y:y-h/2,width:w,height:h}).forEach(([k,v])=>img.setAttribute(k,v));
       const rear=Math.max(0,-Math.sin(a));
       const sil=field&&silhouettes.get(name);

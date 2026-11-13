@@ -109,3 +109,13 @@
 .original-people .profile-timeline strong{font-weight:700}
 @media(max-width:760px){.original-people .profile-header h1{letter-spacing:-.5px}.original-people .profile-header p:not(.eyebrow){font-size:13px}}
 .original-people .mt-section h2{font-family:inherit;font-weight:700;letter-spacing:normal}
+
+/* Let long affiliations use the full mobile reading width. */
+@media(max-width:480px){
+ .people-page .profile-header>div{display:contents}
+ .people-page .profile-header .profile-photo{grid-column:1;grid-row:1/3;width:92px;height:auto}
+ .people-page .profile-header h1{grid-column:2;grid-row:1;margin:0;align-self:end}
+ .people-page .profile-header .profile-position{grid-column:2;grid-row:2;margin:0;font-size:13px}
+ .people-page .profile-header .profile-departments{grid-column:1/-1;grid-row:3;margin:4px 0 0;font-size:15px!important}
+ .people-page .profile-header .mt-actions{grid-column:1/-1;grid-row:4;margin-top:2px}
+}

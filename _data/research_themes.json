@@ -1,7 +1,7 @@
 [
   {
     "id": "ionic-memory",
-    "title": "Ionic Memory and Computing",
+    "title": "Ionic Neuromorphic Computing",
     "intro": "This research examines how ionic materials process, retain, and transmit information, toward principles for energy-efficient computing.",
     "image": "/assets/img/research/ionic-neuromorphic.png",
     "caption": "Conceptual comparison of biological neurons, software-based artificial neurons, and ionic approaches to information processing. The schematic illustrates different ways to represent signal transmission and nonlinear response; it does not depict a completed computing device.",
@@ -10,7 +10,7 @@
   },
   {
     "id": "selective-transport",
-    "title": "Selective Ion Transport",
+    "title": "Molecular Separation",
     "intro": "This research examines the molecular basis of selective transport, with the goal of separating valuable elements using fewer resources and generating less waste.",
     "image": "/assets/img/research/rare-earth-separation-20261021.png",
     "caption": "Lanmodulin and K⁺ channels illustrate biological ion coordination alongside a conceptual synthetic nanopore for rare-earth separation through entry, binding, and release. The Nd³⁺/Dy³⁺ contrast is illustrative and does not report measured separation performance.",

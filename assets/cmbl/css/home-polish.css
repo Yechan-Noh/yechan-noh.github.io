@@ -59,3 +59,13 @@
  .home-page .opening:after{content:"";position:absolute;inset:0;pointer-events:none;background:linear-gradient(to right,#fff,transparent 4%,transparent 96%,#fff);z-index:2}
 }
 @media(max-width:650px){.home-page .opening{height:700px}.home-page .hero-title h1{font-size:clamp(48px,10.8vw,70px)}}
+
+/* Mobile hero: retain the image and breathing room in one compact composition. */
+@media(max-width:650px){
+ .home-page .opening{height:560px}
+ .home-page .hero-title{top:26px}
+ .home-page .hero-signature{top:132px;width:154px;right:6%}
+ .home-page .hero-signature #titleCanvas{width:154px;height:72px}
+ .home-page .scene{top:160px;bottom:0;left:-55%;right:-20%}
+ .home-page .scene img{object-position:56% 65%}
+}
