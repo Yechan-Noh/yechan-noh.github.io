@@ -160,3 +160,21 @@ test('geography falls back to additive page views, never fabricated session tota
  assert.equal(api.locationData({}).unavailable,true);
  const original=report(['city'],['sessions'],[['Chicago',2]]);assert.equal(api.locationData({...detail,locations:original}).metric,'sessions');
 });
+test('export fallback keeps real session counts and marks missing dates unknown',()=>{
+ const visit=(id,device,pages)=>({id,first_ms:Date.parse('2026-11-09T20:00:00Z'),last_ms:Date.parse('2026-11-09T20:01:00Z'),returning:id==='b',page_views:pages.length,engagement_seconds:30,location:{country:'United States',region:'Indiana',city:'South Bend',device},pages:pages.map(path=>({path,time_ms:Date.parse('2026-11-09T20:00:00Z')}))});
+ const r=api.exportedReports({visits:[visit('a','desktop',['/','/research/']),visit('b','mobile',['/'])]},'America/Denver');
+ assert.equal(api.rows(r.current)[0].sessions,2);assert.equal(api.rows(r.current)[0].screenPageViews,3);
+ assert.equal(api.rows(r.locations).length,1);assert.equal(api.rows(r.locations)[0].sessions,2);
+ assert.equal(api.rows(r.returning)[0].sessions,1);assert.equal(api.rows(r.research)[0].sessions,1);
+ const p=api.periodFor('week','2026-11-13'), series=api.dailySeries(r.daily,p);
+ assert.equal(series[0].sessions,2);assert.equal(series[1].sessions,null);assert.equal(series[1].unavailable,true);
+ const html=api.render(r,r,p,{},null,'America/Denver');
+ assert.match(html,/not complete Google Analytics totals/);assert.match(html,/No exported records/);assert.match(html,/Exported · Visits/);
+ assert.equal(api.rows(r.pages).find(r=>r.pagePath==='/').screenPageViews,2);
+ assert.equal(api.mergePages(api.rows(r.pages))[0].userEngagementDuration,null);
+});
+test('quota response stops queued requests instead of amplifying reporting failures',async()=>{
+ let calls=0;const spec={dimensions:[],metrics:[{name:'sessions'}]};
+ const r=await api.fetchReports(Object.fromEntries(Array.from({length:12},(_,i)=>[i,spec])),{session:{backendUrl:'https://test'},partial:true,fetcher:async()=>{calls++;return {ok:false,status:429,json:async()=>({error:{message:'Quota'}})};}});
+ assert.ok(calls<=3);assert.equal(Object.keys(r.failures).length,12);
+});

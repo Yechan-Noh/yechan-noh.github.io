@@ -140,7 +140,15 @@
     list.addEventListener('toggle',e=>{if(e.target.open){const v=data.find(v=>v.id===e.target.dataset.session);if(v)onSelectCity?.(JSON.stringify([v.location.country,v.location.region,v.location.city]));}},true);
     return {load:()=>loaded||attempted?undefined:load(),setCity(city){view.city=city;draw();},setKind(kind){view.kind=kind;draw();},dispose(){disposed=true;controller.abort();data=[];root.replaceChildren();}};
   }
-  const api={mount,clear,canonical,pageName};
+  async function snapshot(options) {
+    const key=JSON.stringify([options.range.start,options.range.end,options.filters]);
+    const saved=cache.get(key);
+    if(saved&&Date.now()-saved.at<180000)return saved.result;
+    const result=await loadVisits(options);
+    cache.set(key,{at:Date.now(),result});if(cache.size>12)cache.delete(cache.keys().next().value);
+    return result;
+  }
+  const api={mount,clear,canonical,pageName,snapshot};
   if(typeof window!=='undefined')window.MTSGVisits=api;
   if(typeof module!=='undefined')module.exports={...api,querySpec,messageFor,loadVisits,renderVisits,compactPages,filterVisits,journeySummary,researchToPapers};
 })();

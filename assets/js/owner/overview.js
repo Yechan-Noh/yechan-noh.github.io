@@ -112,12 +112,31 @@
       outbound:request(range,['linkDomain'],['eventCount'],filters,{sort:'eventCount',event:'click'})
     };
   }
+  // An explicitly labeled alternate source, never mixed into GA API totals.
+  function exportedReports(result, timezone, city='') {
+    const all=result.visits||[], visits=city?all.filter(v=>JSON.stringify([v.location.country,v.location.region,v.location.city])===city):all;
+    const date=ms=>todayInZone(timezone,new Date(Number(ms)));
+    const totals=list=>({sessions:list.length,screenPageViews:list.reduce((n,v)=>n+v.page_views,0),userEngagementDuration:list.reduce((n,v)=>n+v.engagement_seconds,0)});
+    const groups=(list,key)=>{const m=new Map();for(const item of list){const k=key(item);if(!m.has(k))m.set(k,[]);m.get(k).push(item);}return m;};
+    const metadata={exportedVisits:true,limited:!!result.limited,latestEvent:all.length?Math.max(...all.map(v=>v.last_ms)):null};
+    const report=(dims,metrics,data)=>({dimensionHeaders:dims.map(name=>({name})),metricHeaders:metrics.map(name=>({name})),rows:data.map(r=>({dimensionValues:dims.map(k=>({value:String(r[k]??'')})),metricValues:metrics.map(k=>({value:String(r[k]??0)}))})),metadata});
+    const metrics=['sessions','screenPageViews','userEngagementDuration'];
+    const current=report([],metrics,[totals(visits)]);
+    const daily=report(['date'],metrics,[...groups(visits,v=>date(v.first_ms))].map(([day,list])=>({date:dateKey(day),...totals(list)})));
+    const locations=report(['country','region','city'],metrics,[...groups(all,v=>JSON.stringify([v.location.country,v.location.region,v.location.city]))].map(([,list])=>({...list[0].location,...totals(list)})));
+    const pageRows=visits.flatMap(v=>(v.pages||[]).map(p=>({...v.location,date:dateKey(date(p.time_ms)),pagePath:p.path})));
+    const cityPages=report(['date','country','region','city','pagePath'],['screenPageViews'],[...groups(pageRows,p=>JSON.stringify([p.date,p.country,p.region,p.city,p.pagePath]))].map(([,list])=>({...list[0],screenPageViews:list.length})));
+    const pages=report(['pagePath'],['screenPageViews'],[...groups(pageRows,p=>p.pagePath)].map(([pagePath,list])=>({pagePath,screenPageViews:list.length})));
+    const returning=report([],['sessions'],[{sessions:visits.filter(v=>v.returning).length}]);
+    const research=report([],['sessions'],[{sessions:visits.filter(v=>(v.pages||[]).some(p=>/^\/(MPSG\/)?(research|publications)(\/|$)/.test(p.path))).length}]);
+    return {current,daily,locations,cityPages,pages,returning,research};
+  }
   function emptyTotals() { return Object.fromEntries(TOTALS.map(key=>[key,0])); }
   function dailySeries(report, period) {
     const byDate = new Map(rows(report).map(r=>[isoDate(r.date), r]));
     return Array.from({length:daysBetween(period.start,period.displayEnd)}, (_,i)=> {
       const date = addDays(period.start,i);
-      return {...emptyTotals(),...byDate.get(date),date,future:date > period.today,today:date === period.today};
+      return {...(report.metadata?.exportedVisits?Object.fromEntries(TOTALS.map(k=>[k,null])):emptyTotals()),...byDate.get(date),date,unavailable:!!report.metadata?.exportedVisits&&!byDate.has(date),future:date > period.today,today:date === period.today};
     });
   }
   function table(headings, body, empty = 'No activity reported for this selection.') {
@@ -144,12 +163,13 @@
     return `<div class="ov-map"><svg viewBox="0 0 ${shape.width} ${shape.height}" role="group" aria-label="${esc(title)}"><title>${esc(title)}</title>${paths}${points}</svg><p data-map-detail aria-live="polite">${active.length} ${key==='region'?'states / DC':'countries / territories'} · Tap a marker for sessions</p><div class="ov-map-key"><span><i></i> No activity reported</span><span class="ov-scale"></span><span>Fewer → more sessions</span></div>${unknown?`<p class="ov-help">${number(unknown)} sessions have an unmapped or unknown location.</p>`:''}</div>`;
   }
   function calendar(data, period, selected, metric) {
-    const max = Math.max(1,...data.map(r=>r[metric]));
+    const max = Math.max(1,...data.map(r=>r[metric]||0));
+    if (period.mode !== 'week'&&data.some(r=>r.unavailable)) return dailyTable(data);
     if (period.mode !== 'week') {
       const x = i => 38 + i * 900 / Math.max(1,data.length-1), y = n => 160 - n / max * 125;
       return `<div class="ov-trend"><svg viewBox="0 0 980 200" role="group" aria-label="Daily activity; select a point to inspect that day">${[0,.5,1].map(f=>`<line x1="38" x2="938" y1="${y(max*f)}" y2="${y(max*f)}" stroke="#e6ecee"/><text x="28" y="${y(max*f)+4}" text-anchor="end">${metric==='userEngagementDuration'?esc(duration(max*f)):number(max*f)}</text>`).join('')}<path d="${data.map((r,i)=>`${i?'L':'M'}${x(i)},${y(r[metric])}`).join(' ')}" fill="none" stroke="#42636e" stroke-width="2.5"/>${data.map((r,i)=>`<circle cx="${x(i)}" cy="${y(r[metric])}" r="${selected===r.date?6:4}" tabindex="0" role="button" data-day="${r.date}" aria-label="Inspect ${dateLabel(r.date,{weekday:'long'})}: ${metric==='userEngagementDuration'?duration(r[metric]):number(r[metric])}"><title>${r.date}: ${metric==='userEngagementDuration'?duration(r[metric]):number(r[metric])}</title></circle>`).join('')}<text x="38" y="190">${dateLabel(period.start)}</text><text x="938" y="190" text-anchor="end">${dateLabel(period.end)}</text></svg></div>`;
     }
-    return `<div class="ov-week" aria-label="Days of the selected week">${data.map(r=>`<button type="button" class="ov-day${selected===r.date?' is-selected':''}${r.today?' is-today':''}" data-day="${r.date}" aria-pressed="${selected===r.date}" ${r.future?'disabled':''}><span class="ov-day-label">${dateLabel(r.date,{weekday:'short',month:undefined,day:undefined})}<small>${dateLabel(r.date)}${r.today?' · today':''}</small></span><strong>${r.future?'—':metric==='userEngagementDuration'?duration(r[metric]):number(r[metric])}</strong><span class="ov-day-track"><i style="height:${r.future?0:Math.max(3,r[metric]/max*100)}%"></i></span><span class="ov-day-foot">${r.future?'Upcoming':`${number(r.sessions)} visits · ${duration(ratio(r.userEngagementDuration,r.sessions))} / visit`}</span>${r.today?'<em>Partial data</em>':''}</button>`).join('')}</div>`;
+    return `<div class="ov-week" aria-label="Days of the selected week">${data.map(r=>`<button type="button" class="ov-day${selected===r.date?' is-selected':''}${r.today?' is-today':''}" data-day="${r.date}" aria-pressed="${selected===r.date}" ${r.future?'disabled':''}><span class="ov-day-label">${dateLabel(r.date,{weekday:'short',month:undefined,day:undefined})}<small>${dateLabel(r.date)}${r.today?' · today':''}</small></span><strong>${r.future?'—':metric==='userEngagementDuration'?duration(r[metric]):number(r[metric])}</strong><span class="ov-day-track"><i style="height:${r.future?0:Math.max(3,r[metric]/max*100)}%"></i></span><span class="ov-day-foot">${r.future?'Upcoming':r.unavailable?'No exported records':`${number(r.sessions)} visits · ${duration(ratio(r.userEngagementDuration,r.sessions))} / visit`}</span>${r.today?'<em>Partial data</em>':''}</button>`).join('')}</div>`;
   }
   function heatmap(data, range) {
     const dates = Array.from({length:daysBetween(range.start,range.end)},(_,i)=>addDays(range.start,i));
@@ -196,7 +216,7 @@
   const pageName=p=>({'/':'Home','/people/':'People','/research/':'Research','/publications/':'Publications','/news/':'News','/gallery/':'Gallery','/contact/':'Contact'}[canonical(p)]||canonical(p));
   function mergePages(data) {
     const grouped=new Map();
-    for(const r of data){const path=canonical(r.pagePath);if(!grouped.has(path))grouped.set(path,{pagePath:path,screenPageViews:0,userEngagementDuration:0});const g=grouped.get(path);g.screenPageViews+=r.screenPageViews;g.userEngagementDuration+=r.userEngagementDuration;}
+    for(const r of data){const path=canonical(r.pagePath);if(!grouped.has(path))grouped.set(path,{pagePath:path,screenPageViews:0,userEngagementDuration:0});const g=grouped.get(path);g.screenPageViews+=r.screenPageViews;g.userEngagementDuration=Number.isFinite(g.userEngagementDuration)&&Number.isFinite(r.userEngagementDuration)?g.userEngagementDuration+r.userEngagementDuration:null;}
     return [...grouped.values()].sort((a,b)=>b.screenPageViews-a.screenPageViews);
   }
   const paperLink=url=>/^https?:\/\/(?:[^/]+\.)?(doi\.org|biorxiv\.org|arxiv\.org|pubs\.acs\.org|journals\.aps\.org|science\.org|onlinelibrary\.wiley\.com|nature\.com|sciencedirect\.com)(\/|$)/i.test(url||'')||/\/files\/.*\.pdf(?:[?#]|$)/i.test(url||'')&&!/cv|resume/i.test(url);
@@ -236,13 +256,14 @@
     const c=parsed.current?.[0]||emptyTotals(),p=parsed.previous?(parsed.previous[0]||emptyTotals()):{},range=focusRange(period,state.day),daily=dailySeries(parent.daily,period);
     const location=locationData(detail),mapLocations=location.data,paperLinks=links.filter(r=>paperLink(r.linkUrl));
     const kpis=[['Visits',c.sessions,'visits','',`${number(p.sessions)} in the comparison period`],['Returning sessions',parsed.returning?(parsed.returning[0]?.sessions||0):null,'visits','returning','GA returning-browser classification'],['Research & Publications',parsed.research?(parsed.research[0]?.sessions||0):null,'visits','research','Sessions viewing either page'],['Paper link clicks',parsed.links?paperLinks.reduce((n,r)=>n+r.eventCount,0):null,'content','','Recorded outbound paper links']];
-    const notes=notices(detail);
+    const notes=notices(detail), exported=detail.current?.metadata?.exportedVisits;
+    if(exported)notes.unshift('Showing daily exported records, not complete Google Analytics totals. Latest recorded activity: '+(detail.current.metadata.latestEvent?new Date(detail.current.metadata.latestEvent).toLocaleString('en-US',{timeZone:timezone}):'none in this selection')+'. Missing days are unknown, not zero. Engagement is grouped by session start day.'+(detail.current.metadata.limited?' Latest 500 visits only.':''));
     return `<div class="ov-focus"><div><span class="ov-focus-dot"></span><div><p class="ov-eyebrow">${state.day?'Selected day':period.label}</p><h2>${dateLabel(range.start)}${range.end===range.start?'':' – '+dateLabel(range.end)}</h2><p>${state.city?esc(JSON.parse(state.city).slice().reverse().join(', ')):state.country||'All locations'} · ${state.device||'All devices'}</p></div></div><div>${state.day?'<button type="button" data-ov-all>Full period</button>':''}${state.city?'<button type="button" data-clear-city>Clear city</button>':''}</div></div>
-    <section class="ov-kpis">${kpis.map(([label,n,tab,kind,note])=>`<button type="button" data-kpi-tab="${tab}" data-kind="${kind}"><span>${label}</span><strong>${number(n)}</strong><small>${note}</small></button>`).join('')}</section><p class="ov-comparison">${number(p.sessions)} → ${number(c.sessions)} visits · Compared with ${dateLabel(range.comparisonStart)}–${dateLabel(range.comparisonEnd)}${range.end===period.today?' · Today is partial; the comparison day is complete':''}</p>
+    <section class="ov-kpis">${kpis.map(([label,n,tab,kind,note])=>`<button type="button" data-kpi-tab="${tab}" data-kind="${kind}"><span>${exported?'Exported · ':''}${label}</span><strong>${number(n)}</strong><small>${note}</small></button>`).join('')}</section><p class="ov-comparison" ${exported?'hidden':''}>${number(p.sessions)} → ${number(c.sessions)} visits · Compared with ${dateLabel(range.comparisonStart)}–${dateLabel(range.comparisonEnd)}${range.end===period.today?' · Today is partial; the comparison day is complete':''}</p>
     ${notes.length?`<p class="ov-warning">${notes.map(esc).join(' ')}</p>`:''}
     <section class="ov-card ov-calendar"><div class="ov-card-title"><div><p class="ov-eyebrow">Daily activity · all cities in selected country</p><h2>${dateLabel(period.start)} – ${dateLabel(period.displayEnd)}</h2></div><div class="ov-calendar-controls">${period.mode==='week'?`<button type="button" data-ov-week="-1" aria-label="Previous week">←</button><button type="button" data-ov-week="1" aria-label="Next week" ${state.weekOffset>=0?'disabled':''}>→</button>`:''}<label>Chart<select data-ov-metric aria-label="Daily chart"><option value="sessions" ${state.metric==='sessions'?'selected':''}>Visits</option><option value="screenPageViews" ${state.metric==='screenPageViews'?'selected':''}>Page views</option><option value="userEngagementDuration" ${state.metric==='userEngagementDuration'?'selected':''}>Active time</option></select></label></div></div><div data-daily-chart>${calendar(daily,period,state.day,state.metric||'sessions')}</div></section>
     <div data-panel="overview"><div class="ov-explore"><section class="ov-card" data-geography>${location.unavailable?unavailable():geography(mapLocations,maps,state,location.metric)}</section><section class="ov-card"><div class="ov-card-title"><div><p class="ov-eyebrow">Locations</p><h2>Explore a city</h2></div><label>Find location<input data-ov-location-search value="${esc(state.locationSearch||'')}" placeholder="City or region…"></label></div><p class="ov-help">Select a city to filter this period and open its visit records.${!detail.locations&&detail.cityPages?' Counts below are page views from the city/page report, not visits.':''}</p><div data-city-list>${location.unavailable?unavailable():cityList(mapLocations,state,location.metric)}</div></section></div>
-    <section class="ov-card ov-city-pages"><div class="ov-card-title"><div><p class="ov-eyebrow">Available aggregate data</p><h2>Pages viewed by city</h2><p class="ov-help">Daily totals, including historical records. These rows are not individual visits.</p></div><label>Find city<input data-ov-city-search placeholder="City…"></label></div><div data-ov-city-pages>${detail.cityPages?cityPagesTable(cityPages):unavailable()}</div></section>
+    <section class="ov-card ov-city-pages"><div class="ov-card-title"><div><p class="ov-eyebrow">Available aggregate data</p><h2>Pages viewed by city</h2><p class="ov-help">${exported?'Page views within the loaded daily exports.':'Daily totals, including historical records. These rows are not individual visits.'}</p></div><label>Find city<input data-ov-city-search placeholder="City…"></label></div><div data-ov-city-pages>${detail.cityPages?cityPagesTable(cityPages):unavailable()}</div></section>
     <div class="ov-explore"><section class="ov-card"><p class="ov-eyebrow">Content</p><h2>Pages receiving attention</h2><div data-ov-pages>${detail.pages?pageTable(pages):unavailable()}</div></section><section class="ov-card"><p class="ov-eyebrow">Discovery</p><h2>How visitors find you</h2>${detail.sources?bars(sources.slice(0,6),'sessionSourceMedium','sessions',c.sessions):unavailable()}</section></div></div>
     <div data-panel="visits" hidden><section class="ov-card ov-visits" data-ov-visits></section></div>
     <div data-panel="content" hidden>${deferContent?'':renderContent(detail,range)}</div>
@@ -268,7 +289,7 @@
     return report;
   }
   async function fetchReports(specs, {propertyId,session,signal,fetcher=fetch,onProgress=()=>{},partial=false,timeoutMs=22000}) {
-    const entries=Object.entries(specs), result={}, failures={};
+    const entries=Object.entries(specs), result={}, failures={};let unavailableReason='';
     Object.defineProperty(result,'failures',{value:failures});
     const batchSize=session.backendUrl?1:5, batches=[];
     for(let i=0;i<entries.length;i+=batchSize)batches.push(entries.slice(i,i+batchSize));
@@ -283,6 +304,7 @@
         const body=await response.json();
         if(!response.ok) {
           const error=new Error(response.status===429?'The reporting limit was reached. Please retry later.':body.error?.message||'Analytics could not be loaded. Please retry.');
+          if(response.status===429)unavailableReason=error.message;
           error.connect=!session.backendUrl&&(response.status===401||response.status===403);
           throw error;
         }
@@ -296,7 +318,7 @@
       } finally {clearTimeout(timer);signal?.removeEventListener('abort',cancel);}
       done+=batch.length;onProgress(done,entries.length,result);
     }
-    async function worker(){while(next<batches.length){if(signal?.aborted)throw signal.reason;await run(batches[next++]);}}
+    async function worker(){while(next<batches.length){if(signal?.aborted)throw signal.reason;const batch=batches[next++];if(unavailableReason){for(const [key] of batch)failures[key]=unavailableReason;done+=batch.length;onProgress(done,entries.length,result);}else await run(batch);}}
     // Bounded concurrency: no 16-request burst, and no serial head-of-line blocking.
     await Promise.all(Array.from({length:session.backendUrl?Math.min(3,batches.length):1},worker));
     return result;
@@ -368,12 +390,22 @@
           const all=requests(range,{country:state.country,device:state.device,city:state.city});
           // These old reports no longer feed any visible component.
           const specs=Object.fromEntries(['current','daily','previous','countries','locations','pages','sources','returning','research','links','cityPages','hours','events'].filter(k=>all[k]).map(k=>[k,all[k]]));
-          reports=await fetchReports(specs,{propertyId,session,signal,partial:true,onProgress:(done,total,partial)=>{
-            if(removed||version!==revision)return;
-            status.textContent=`Loading reports ${done} of ${total}…`;
-            // Show the complete overview before optional timing/action reports.
-            if(partial.current&&partial.daily&&!detail){if(!state.day&&!state.city||!parent)parent=partial;detail=partial;updateCountries();draw();}
-          }});
+          const core={current:specs.current,daily:specs.daily};
+          reports=await fetchReports(core,{propertyId,session,signal,partial:true});
+          if(!reports.current||!reports.daily) {
+            if(!window.MTSGVisits?.snapshot)throw new Error('Summary reports are unavailable. Open Visits to load exported records.');
+            status.textContent='Google summary unavailable; loading daily exported records…';
+            const exported=await window.MTSGVisits.snapshot({range,filters:{country:state.country,device:state.device},token:session.token,backendUrl:session.backendUrl,signal:AbortSignal.any([signal,AbortSignal.timeout(65000)])});
+            reports=exportedReports(exported,timezone,state.city);
+          } else {
+            if(!state.day&&!state.city||!parent)parent=reports;
+            detail=reports;draw();
+            const optional=Object.fromEntries(Object.entries(specs).filter(([k])=>!core[k]));
+            const extra=await fetchReports(optional,{propertyId,session,signal,partial:true,onProgress:(done,total)=>{
+              if(!removed&&version===revision)status.textContent=`Summary ready · loading additional reports ${done} of ${total}…`;
+            }});
+            reports={...reports,...extra};Object.defineProperty(reports,'failures',{value:extra.failures});
+          }
           if(removed||version!==revision||!getSession())return;
           if(!Object.keys(reports.failures||{}).length)cache.set(key,{time:Date.now(),reports});
           if(cache.size>16)cache.delete(cache.keys().next().value);
@@ -381,9 +413,9 @@
         if(!reports.current||!reports.daily)throw new Error('The summary or daily report is unavailable. '+Object.values(reports.failures||{}).slice(0,1).join(' '));
         maps=maps||await mapPromise;
         if(removed||version!==revision||!getSession())return;
-        if(!state.day&&!state.city||!parent)parent=reports;
+        if(!state.day&&!state.city||!parent||!!parent.current?.metadata?.exportedVisits!==!!reports.current?.metadata?.exportedVisits)parent=reports;
         detail=reports;loadedAt=new Date();updateCountries();draw();
-        status.textContent=Object.keys(reports.failures||{}).length?`Loaded ${Object.keys(reports).length} reports. Unavailable: ${Object.keys(reports.failures).join(', ')}. Refresh to retry.`:`Updated ${loadedAt.toLocaleTimeString([], {hour:'2-digit',minute:'2-digit'})} · Recent data can change as Google processes events.`;
+        status.textContent=reports.current.metadata?.exportedVisits?'Daily exported records loaded. Google summary reports are temporarily unavailable; values below are limited to the stored export.':Object.keys(reports.failures||{}).length?`Loaded ${Object.keys(reports).length} reports. Unavailable: ${Object.keys(reports.failures).join(', ')}. Refresh to retry.`:`Updated ${loadedAt.toLocaleTimeString([], {hour:'2-digit',minute:'2-digit'})} · Recent data can change as Google processes events.`;
       } catch(error) {
         if(removed||version!==revision||signal.aborted)return;
         if(detail){status.textContent='Overview loaded. Some additional reports did not respond; refresh to retry.';return;}
@@ -442,5 +474,5 @@
   }
   const api={mount};
   if(typeof window!=='undefined')window.MTSGOverview=api;
-  if(typeof module!=='undefined')module.exports={...api,cityPagesTable,locationData,mergePages,pageName,paperLink,geography,filterRequest:request,esc,number,duration,ratio,delta,rows,request,requests,todayInZone,periodFor,focusRange,dailySeries,calendar,heatmap,render,renderContent,mapGraphic,csv,exportRows,normalizeReport,fetchReports};
+  if(typeof module!=='undefined')module.exports={...api,exportedReports,cityPagesTable,locationData,mergePages,pageName,paperLink,geography,filterRequest:request,esc,number,duration,ratio,delta,rows,request,requests,todayInZone,periodFor,focusRange,dailySeries,calendar,heatmap,render,renderContent,mapGraphic,csv,exportRows,normalizeReport,fetchReports};
 })();
